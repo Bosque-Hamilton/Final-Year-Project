@@ -43,7 +43,7 @@ known_face_names = [
     "Bradly"
 ]
 # Initialize some variables
-face_locations = []
+
 face_encodings = []
 face_names = []
 
