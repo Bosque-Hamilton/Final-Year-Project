@@ -1,13 +1,34 @@
 <!DOCTYPE html>
 <html>
-
+    <head>
+        <style>
+            .video-container {
+                position: relative;
+                width: 50%;
+                height: 50%;
+                margin: auto;
+                overflow: hidden;
+            }
+    
+            .video-container img {
+                width: 100%;
+                height: auto;
+                /* color: rgb(42, 228, 57); */
+            }
+        </style>
+    </head>
+   
 
   <body>
     <div class="container">
         <div class="row">
             <div class="col-lg-8  offset-lg-2">
                 <h3 class="mt-5">Live Streaming</h3>
-                <img src="{{ url_for('video_feed') }}" width="100%">
+                <div class = "video-container">
+                    <img src="{{ url_for('video_feed') }}" >
+
+                </div>
+                
             </div>
         </div>
     </div>
