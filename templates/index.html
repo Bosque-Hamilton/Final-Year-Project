@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Information Form</title>
+    <style>
+        /* ... CSS styling ... */
+    </style>
+</head>
+<body>
+    <h1>Enter User Information and Capture Images</h1>
+    <form id="userForm" method="POST">
+        <label>Name:</label>
+        <input type="text" name="name" required><br><br>
+
+        <label>Course:</label>
+        <input type="text" name="course"><br><br>
+
+        <label>Year:</label>
+        <input type="number" name="year" required><br><br>
+
+        <label>Student ID:</label>
+        <input type="text" name="student_id" required><br><br>
+
+        <button type="button" id="captureButton" onclick="captureImage()" >Capture Image</button>
+        <button type="submit">Submit</button>
+    </form>
+
+    <a href="/fr_page">Go to Face Recognition</a>
+
+    <canvas id="canvas" style="display: none;" width="480" height="640"></canvas>
+
+    <script>
+        let canvas = document.getElementById("canvas");
+        let context = canvas.getContext("2d");
+        let captureCount = 0;
+
+        async function captureImage() {
+            if (captureCount < 1) {
+                try {
+                    const constraints = { video: true };
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    const video = document.createElement("video");
+                    video.srcObject = stream;
+                    video.onloadedmetadata = function () {
+                        video.play();
+                        setTimeout(function () {
+                            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            canvas.style.display = "block";
+                            captureCount++;
+                            document.getElementById("captureButton").disabled = true;
+                            stream.getTracks().forEach(function (track) {
+                                track.stop();
+                            });
+                            const imageData = canvas.toDataURL("image/jpeg");
+                            document.getElementById("userForm").insertAdjacentHTML(
+                                "beforeend",
+                                '<input type="hidden" name="imageData" value="' + imageData + '">'
+                            );
+                        }, 2000); // Capture an image after 2 seconds
+                    };
+                } catch (error) {
+                    console.error("Error accessing the webcam: ", error);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

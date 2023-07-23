@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Face Recognition Attendance System</title>
+</head>
+<body>
+    <h1>Face Recognition - Live Feed</h1>
+    <div class = "video-container">
+        <img src="{{ url_for('video_feed') }}" >
+    </div>
+        <!-- <h1>Face Recognition - Live Feed</h1>
+        <video id="video_feed" width="640" height="480" autoplay></video>
+        <br>
+        <a href="/">Add Student</a>
+        <script>
+        const video = document.getElementById('video_feed');
+        const videoUrl = "/video_feed";
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                video.srcObject = stream;
+            })
+            .catch(function (error) {
+                console.error("Error accessing webcam:", error);
+            });
+        }
+        </script> -->
+        
+    <!-- <h1>Face Recognition Attendance System</h1>
+    <div>
+        <video id="video" width="640" height="480" autoplay></video>
+    </div>
+    <div>
+        <canvas id="canvas" width="640" height="480"></canvas>
+    </div> -->
+    <!-- <script>
+        // Get access to the webcam
+        async function startVideo() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+                const videoElement = document.getElementById('video');
+                videoElement.srcObject = stream;
+            } catch (err) {
+                console.error('Error accessing webcam: ', err);
+            }
+        }
+
+        // Start the video stream when the page loads
+        startVideo();
+
+        // Draw face recognition results on the canvas
+        function drawOnCanvas(faces) {
+            const canvasElement = document.getElementById('canvas');
+            const context = canvasElement.getContext('2d');
+            context.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            context.drawImage(video, 0, 0, 640, 480);
+
+            for (const face of faces) {
+                const { x, y, width, height } = face;
+                context.beginPath();
+                context.lineWidth = '4';
+                context.strokeStyle = 'red';
+                context.rect(x, y, width, height);
+                context.stroke();
+            }
+        }
+
+        // Continuously fetch video frames and send to the server for face recognition
+        async function fetchFrames() {
+            try {
+                const videoElement = document.getElementById('video');
+                const canvasElement = document.getElementById('canvas');
+                const context = canvasElement.getContext('2d');
+                context.drawImage(videoElement, 0, 0, 640, 480);
+                const imageData = context.getImageData(0, 0, 640, 480);
+                const formData = new FormData();
+                formData.append('image_data', imageData);
+
+                const response = await fetch('/video_feed', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const result = await response.json();
+                drawOnCanvas(result.faces);
+
+                requestAnimationFrame(fetchFrames);
+            } catch (err) {
+                console.error('Error fetching frames: ', err);
+            }
+        }
+
+        // Start fetching frames when the page loads
+        fetchFrames();
+    </script> -->
+</body>
+</html>
