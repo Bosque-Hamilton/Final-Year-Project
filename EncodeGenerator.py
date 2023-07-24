@@ -22,7 +22,7 @@ def findEncodings(imagesList):
 
 def save_image_from_blob(image_blob, image_name):
     with Image.open(io.BytesIO(image_blob)) as img:
-        image_file_path = os.path.join("images", image_name)
+        image_file_path = os.path.join("images", f"{image_name}.jpg")
         img.save(image_file_path)
 
 
@@ -47,7 +47,7 @@ def read_images_from_sql():
     for image_name, image_data in images_data:
         save_image_from_blob(image_data, image_name)
 
-        img = cv2.imread(os.path.join("images", image_name))
+        img = cv2.imread(os.path.join("images", f"{image_name}.jpg"))
         imgList.append(img)
         image_names.append(image_name)
 

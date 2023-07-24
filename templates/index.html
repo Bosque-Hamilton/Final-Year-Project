@@ -2,9 +2,62 @@
 <html>
 <head>
     <title>User Information Form</title>
-    <style>
-        /* ... CSS styling ... */
-    </style>
+        <s>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f0f0f0;
+                margin: 0;
+                padding: 0;
+            }
+            h1 {
+                text-align: center;
+                padding: 20px;
+                background-color: #333;
+                color: #fff;
+                margin: 0;
+            }
+            form {
+                max-width: 500px;
+                margin: 20px auto;
+                padding: 20px;
+                background-color: #fff;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            }
+            label {
+                display: block;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            input[type="text"],
+            input[type="number"] {
+                width: 100%;
+                padding: 10px;
+                margin-bottom: 15px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                box-sizing: border-box;
+            }
+            button {
+                padding: 10px 20px;
+                background-color: #333;
+                color: #fff;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            button:disabled {
+                background-color: #ccc;
+                cursor: not-allowed;
+            }
+            a {
+                display: block;
+                text-align: center;
+                margin-top: 15px;
+                color: #333;
+                text-decoration: none;
+            }
+        </style>
 </head>
 <body>
     <h1>Enter User Information and Capture Images</h1>
@@ -26,6 +79,7 @@
     </form>
 
     <a href="/fr_page">Go to Face Recognition</a>
+    <a href="/attendance">View Attendance</a>
 
     <canvas id="canvas" style="display: none;" width="480" height="640"></canvas>
 
