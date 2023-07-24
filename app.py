@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response, request, redirect
+from flask import Flask, render_template, Response, request, redirect, url_for, session
 import cv2
 import face_recognition
 import numpy as np
@@ -7,12 +7,19 @@ from PIL import Image
 import os
 import cvzone
 import pickle
+from flask_wtf import CSRFProtect
+import secrets
 import datetime
 import base64
 import time
 from io import BytesIO
 
 app = Flask(__name__)
+secret_key = secrets.token_hex(16)  # Generate a 32-character random hexadecimal string
+app.secret_key = secret_key  # Replace with your own secret key
+
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
 
 # Set up your MySQL database configuration here
 mysql_host = 'localhost'
@@ -333,6 +340,91 @@ def fr_page():
 @app.route('/video_feed')
 def video_feed():
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        name = request.form['name']
+        password = request.form['password']
+        email = request.form['email']
+        course = request.form['course']
+        gender = request.form['gender']
+
+        try:
+            connection = mysql.connector.connect(
+                host=mysql_host,
+                user=mysql_user,
+                password=mysql_password,
+                database=mysql_database
+            )
+
+            cursor = connection.cursor()
+
+            # Define the SQL query to insert lecturer information
+            insert_query = "INSERT INTO lecturer (name, password, email, course, gender) VALUES (%s, %s, %s, %s, %s)"
+            cursor.execute(insert_query, (name, password, email, course, gender))
+
+            # Commit changes to the database
+            connection.commit()
+
+            cursor.close()
+            connection.close()
+
+            # Redirect to a success page or another endpoint
+            return redirect('/signup-success')
+
+        except mysql.connector.Error as err:
+            return f"Error: {err}"
+
+    return render_template('signup.html')
+
+@app.route('/signup-success')
+def signup_success():
+    return "Signup Successful! Thank you for registering."
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        # Connect to the MySQL database
+        try:
+            connection = mysql.connector.connect(
+                host=mysql_host,
+                user=mysql_user,
+                password=mysql_password,
+                database=mysql_database
+            )
+
+            cursor = connection.cursor()
+
+            # Define the SQL query to check if the email and password match in the lecturer table
+            select_query = "SELECT * FROM lecturer WHERE email = %s AND password = %s"
+            cursor.execute(select_query, (email, password))
+            result = cursor.fetchone()
+
+            cursor.close()
+            connection.close()
+
+            if result:
+                # Login successful
+                # You can store the lecturer's information in the session for future use
+                session['user_id'] = result[0]
+                session['name'] = result[1]
+                session['email'] = result[2]
+                # Add more fields from the lecturer table as needed
+
+                return redirect('/')  # Redirect to the dashboard page after login
+
+            else:
+                # Login failed, show an error message
+                return render_template('login.html', error_message="Invalid email or password")
+
+        except mysql.connector.Error as err:
+            return f"Error: {err}"
+
+    return render_template('login.html')
 
 
 

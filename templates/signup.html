@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!---Coding By CodingLab | www.codinglabweb.com--->
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <!--<title>Lecturer Signup</title>-->
+    <!---Custom CSS File--->
+    <link rel="stylesheet" href="{{ url_for('static', filename='signup.css') }}" />
+</head>
+<body>
+<section class="container">
+    <header>Lecturer Signup</header>
+    <form action="{{ url_for('signup') }}" class="form" method="POST">
+        <!-- Add CSRF token for security -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- {{ csrf_token() }} -->
+
+        <div class="input-box">
+            <label>Full Name</label>
+            <input type="text" name="name" placeholder="Enter full name" required />
+        </div>
+        <div class="input-box">
+            <label>Email Address</label>
+            <input type="email" name="email" placeholder="Enter email address" required />
+        </div>
+
+        <div class="input-box">
+            <label>Course</label>
+            <input type="text" name="course" placeholder="Enter course" required />
+        </div>
+        <div class="gender-box">
+            <h3>Gender</h3>
+            <div class="gender-option">
+                <div class="gender">
+                    <input type="radio" id="check-male" name="gender" value="Male" checked />
+                    <label for="check-male">Male</label>
+                </div>
+                <div class="gender">
+                    <input type="radio" id="check-female" name="gender" value="Female" />
+                    <label for="check-female">Female</label>
+                </div>
+                <div class="gender">
+                    <input type="radio" id="check-other" name="gender" value="Prefer not to say" />
+                    <label for="check-other">Other</label>
+                </div>
+            </div>
+        </div>
+        <div class="input-box">
+            <label>Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter password" required />
+        </div>
+        <div class="input-box">
+            <label>Confirm Password</label>
+            <input type="password" id="confirmPassword" name="confirm_password" placeholder="Confirm password" required />
+        </div>
+        <button type="submit">Sign Up</button>
+    </form>
+</section>
+<script>
+    function validateForm() {
+        var password = document.getElementById("password").value;
+        var confirmPassword = document.getElementById("confirmPassword").value;
+
+        if (password !== confirmPassword) {
+            alert("Passwords do not match!");
+            return false; // Prevent form submission
+        }
+
+        return true; // Allow form submission
+    }
+</script>
+</body>
+</html>
