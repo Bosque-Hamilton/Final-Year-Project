@@ -444,6 +444,36 @@ def logout():
     return redirect('/')
 
 
+@app.route('/dashboard')
+def dashboard():
+    # Check if the user is logged in by verifying the 'user_id' in the session
+    if 'user_id' not in session:
+        return redirect('/')
+
+    try:
+        # Connect to the MySQL database
+        connection = mysql.connector.connect(
+            host=mysql_host,
+            user=mysql_user,
+            password=mysql_password,
+            database=mysql_database
+        )
+        cursor = connection.cursor()
+
+        # Fetch attendance data from the database
+        select_query = "SELECT name, student_id, time, date FROM attendance"
+        cursor.execute(select_query)
+        attendance_data = cursor.fetchall()
+
+        cursor.close()
+        connection.close()
+
+        return render_template('dashboard.html', attendance_data=attendance_data)
+
+    except mysql.connector.Error as err:
+        return f"Error: {err}"
+
+
 
 
 if __name__ == "__main__":

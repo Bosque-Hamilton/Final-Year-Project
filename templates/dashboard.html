@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+
+<body class="bg-gray-100">
+    <!-- Side bar nav -->
+    <nav class="bg-indigo-700 w-1/5 h-screen">
+        <ul class="space-y-6 pt-12 px-6">
+            <li class="text-white text-xl font-semibold hover:bg-indigo-600 hover:text-white rounded-lg p-3 transition">
+                <a href="#" class="block">Home</a>
+            </li>
+            <li class="text-white text-xl font-semibold hover:bg-indigo-600 hover:text-white rounded-lg p-3 transition">
+                <a href="#" class="block">Attendance</a>
+            </li>
+            <!-- Add more sidebar items as needed -->
+        </ul>
+    </nav>
+
+    <div class="w-4/5 ml-auto p-8">
+        <header>
+            <h1 class="text-4xl font-semibold mb-8">Dashboard</h1>
+        </header>
+
+        <!-- Filter section -->
+        <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Filter Attendance</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="student_name" class="text-sm">Student Name:</label>
+                    <input type="text" id="student_name" class="border rounded-lg p-2 w-full" placeholder="Enter student name">
+                </div>
+                <div>
+                    <label for="course" class="text-sm">Course:</label>
+                    <input type="text" id="course" class="border rounded-lg p-2 w-full" placeholder="Enter course">
+                </div>
+                <!-- Add more filter options as needed -->
+            </div>
+        </section>
+
+        <!-- Attendance table -->
+        <main class="flex-1 p-8">
+            <h1 class="text-3xl font-semibold mb-8">Attendance Data</h1>
+            <input class="w-full mb-4 p-2 rounded-md border border-gray-300" type="text" id="searchInput" placeholder="Search for names..">
+
+        <table>
+        <tr>
+            <th>Name</th>
+            <th>Student ID</th>
+            <th>Time</th>
+            <th>Date</th>
+        </tr>
+        {% for row in attendance_data %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+        </main>
+    </div>
+
+    <!-- Tailwind CSS JS (for responsive classes) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/forms@0.3.3/dist/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/typography@0.8.2/dist/index.js"></script>
+    <script>
+        // JavaScript for filtering the table
+        document.getElementById("searchInput").addEventListener("keyup", function () {
+            const searchValue = this.value.toLowerCase();
+            const rows = document.querySelectorAll("#attendanceTable tbody tr");
+
+            rows.forEach(row => {
+                const columns = row.getElementsByTagName("td");
+                let shouldShowRow = false;
+
+                for (let i = 0; i < columns.length; i++) {
+                    const columnText = columns[i].innerText.toLowerCase();
+                    if (columnText.includes(searchValue)) {
+                        shouldShowRow = true;
+                        break;
+                    }
+                }
+
+                row.style.display = shouldShowRow ? "table-row" : "none";
+            });
+        });
+    </script>
+</body>
+
+</html>
