@@ -16,20 +16,15 @@
     <div class="error">{{ error_message }}</div>
     {% endif %}
     <form action="{{ url_for('login') }}" class="form" method="POST">
-        <!-- Add CSRF token for security -->
-        <!-- {{ csrf_token() }} -->
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
         <div class="input-box">
             <label>Email Address</label>
             <input type="email" name="email" placeholder="Enter email address" required />
         </div>
-
         <div class="input-box">
             <label>Password</label>
             <input type="password" name="password" placeholder="Enter password" required />
         </div>
-
         <button type="submit">Login</button>
     </form>
 </section>

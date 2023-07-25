@@ -28,56 +28,61 @@ mysql_password = ''
 mysql_database = 'face_recognition_db'
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/add_prsn', methods=['GET', 'POST'])
 def index():
-    if request.method == 'POST':
-        name = request.form['name']
-        student_id = request.form['student_id']
-        course = request.form['course']
-        year = int(request.form['year'])
+    if 'user_id' in session:
+        # User is logged in, show the home page
+        if request.method == 'POST':
+            name = request.form['name']
+            student_id = request.form['student_id']
+            course = request.form['course']
+            year = int(request.form['year'])
 
-        # Capture an image from the webcam
-        image = capture_image()
+            # Capture an image from the webcam
+            image = capture_image()
 
-        # Store user information in the database
-        try:
-            connection = mysql.connector.connect(
-                host=mysql_host,
-                user=mysql_user,
-                password=mysql_password,
-                database=mysql_database
-            )
+            # Store user information in the database
+            try:
+                connection = mysql.connector.connect(
+                    host=mysql_host,
+                    user=mysql_user,
+                    password=mysql_password,
+                    database=mysql_database
+                )
 
-            cursor = connection.cursor()
+                cursor = connection.cursor()
 
-            # Define the SQL query to insert user information
-            insert_query = "INSERT INTO student (name, student_id, course, year) VALUES (%s, %s, %s, %s)"
-            cursor.execute(insert_query, (name, student_id, course, year))
+                # Define the SQL query to insert user information
+                insert_query = "INSERT INTO student (name, student_id, course, year) VALUES (%s, %s, %s, %s)"
+                cursor.execute(insert_query, (name, student_id, course, year))
 
-            image_buffer = BytesIO()
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            image_pil = Image.fromarray(image)
-            image_pil.save(image_buffer, format='JPEG')
-            image_binary = image_buffer.getvalue()
+                image_buffer = BytesIO()
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                image_pil = Image.fromarray(image)
+                image_pil.save(image_buffer, format='JPEG')
+                image_binary = image_buffer.getvalue()
 
-            # Define the SQL query to insert the image into the Images table
-            insert_image_query = "INSERT INTO images (image_name, image_data) VALUES (%s, %s)"
+                # Define the SQL query to insert the image into the Images table
+                insert_image_query = "INSERT INTO images (image_name, image_data) VALUES (%s, %s)"
 
-            # Insert the image into the Images table
-            cursor.execute(insert_image_query, (name, image_binary))
+                # Insert the image into the Images table
+                cursor.execute(insert_image_query, (name, image_binary))
 
-            # Commit changes to the database
-            connection.commit()
+                # Commit changes to the database
+                connection.commit()
 
-            cursor.close()
-            connection.close()
-            
-            return redirect('/')
+                cursor.close()
+                connection.close()
 
-        except mysql.connector.Error as err:
-            return f"Error: {err}"
+                return redirect('/add_prsn')
 
-    return render_template('index.html')
+            except mysql.connector.Error as err:
+                return f"Error: {err}"
+
+        return render_template('index.html', name=session['name'])
+    else:
+        # User is not logged in, redirect to login page
+        return redirect(url_for('login'))
 
 def capture_image():
     # Function to capture an image from the webcam
@@ -382,8 +387,12 @@ def signup():
 def signup_success():
     return "Signup Successful! Thank you for registering."
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def login():
+    if 'user_id' in session:
+        # User is already logged in, redirect to the home page
+        return redirect('/add_prsn')
+
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
@@ -415,7 +424,7 @@ def login():
                 session['email'] = result[2]
                 # Add more fields from the lecturer table as needed
 
-                return redirect('/')  # Redirect to the dashboard page after login
+                return redirect('/add_prsn')  # Redirect to the home page after login
 
             else:
                 # Login failed, show an error message
@@ -427,8 +436,17 @@ def login():
     return render_template('login.html')
 
 
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    # Clear the user information from the session
+    session.clear()
+    # Redirect the user to the login page after logout
+    return redirect('/')
+
+
+
 
 if __name__ == "__main__":
     
     
-    app.run()
+    app.run(debug=True)

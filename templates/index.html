@@ -60,6 +60,8 @@
         </style>
 </head>
 <body>
+    <h1>Welcome to the Home Page!</h1>
+    <p>Hello, {{ session['name'] }}!</p>
     <h1>Enter User Information and Capture Images</h1>
     <form id="userForm" method="POST">
         <label>Name:</label>
@@ -80,6 +82,10 @@
 
     <a href="/fr_page">Go to Face Recognition</a>
     <a href="/attendance">View Attendance</a>
+    <form action="/logout" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Logout</button>
+    </form>
 
     <canvas id="canvas" style="display: none;" width="640" height="480"></canvas>
 
