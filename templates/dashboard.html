@@ -8,76 +8,148 @@
     <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .sidebar {
+            background-color: #6366f1;
+            width: 240px;
+            height: 100vh;
+            padding-top: 30px;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar li {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+        }
+
+        .sidebar li:hover {
+            background-color: #4f46e5;
+            cursor: pointer;
+        }
+
+        .main-content {
+            margin-left: 240px;
+            padding: 30px;
+        }
+
+        .filter-section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-section h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .attendance-table {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .attendance-table th,
+        .attendance-table td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        .attendance-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+
+        .attendance-table tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100">
-    <!-- Side bar nav -->
-    <nav class="bg-indigo-700 w-1/5 h-screen">
-        <ul class="space-y-6 pt-12 px-6">
-            <li class="text-white text-xl font-semibold hover:bg-indigo-600 hover:text-white rounded-lg p-3 transition">
+<body>
+    <div class="sidebar">
+        <ul>
+            <li class="text-white text-xl font-semibold rounded-lg p-3 transition">
                 <a href="#" class="block">Home</a>
             </li>
-            <li class="text-white text-xl font-semibold hover:bg-indigo-600 hover:text-white rounded-lg p-3 transition">
+            <li class="text-white text-xl font-semibold rounded-lg p-3 transition">
                 <a href="#" class="block">Attendance</a>
             </li>
             <!-- Add more sidebar items as needed -->
         </ul>
-    </nav>
+    </div>
 
-    <div class="w-4/5 ml-auto p-8">
+    <div class="main-content">
         <header>
             <h1 class="text-4xl font-semibold mb-8">Dashboard</h1>
         </header>
 
-        <!-- Filter section -->
-        <section class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-semibold mb-4">Filter Attendance</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label for="student_name" class="text-sm">Student Name:</label>
-                    <input type="text" id="student_name" class="border rounded-lg p-2 w-full" placeholder="Enter student name">
-                </div>
-                <div>
-                    <label for="course" class="text-sm">Course:</label>
-                    <input type="text" id="course" class="border rounded-lg p-2 w-full" placeholder="Enter course">
-                </div>
-                <!-- Add more filter options as needed -->
-            </div>
-        </section>
-
         <!-- Attendance table -->
-        <main class="flex-1 p-8">
-            <h1 class="text-3xl font-semibold mb-8">Attendance Data</h1>
-            <input class="w-full mb-4 p-2 rounded-md border border-gray-300" type="text" id="searchInput" placeholder="Search for names..">
+        <main>
+            <h1 class="text-3xl font-semibold mb-8 mt-12">Attendance Data</h1>
+            <input class="search-input" type="text" id="searchInput" placeholder="Search for names..">
 
-        <table>
-        <tr>
-            <th>Name</th>
-            <th>Student ID</th>
-            <th>Time</th>
-            <th>Date</th>
-        </tr>
-        {% for row in attendance_data %}
-        <tr>
-            <td>{{ row[0] }}</td>
-            <td>{{ row[1] }}</td>
-            <td>{{ row[2] }}</td>
-            <td>{{ row[3] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+            <table class="attendance-table w-full">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Student ID</th>
+                        <th>Time</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in attendance_data %}
+                    <tr>
+                        <td>{{ row[0] }}</td>
+                        <td>{{ row[1] }}</td>
+                        <td>{{ row[2] }}</td>
+                        <td>{{ row[3] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </main>
     </div>
 
-    <!-- Tailwind CSS JS (for responsive classes) -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/forms@0.3.3/dist/index.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/typography@0.8.2/dist/index.js"></script>
+    <!-- JavaScript for filtering the table -->
     <script>
-        // JavaScript for filtering the table
         document.getElementById("searchInput").addEventListener("keyup", function () {
             const searchValue = this.value.toLowerCase();
-            const rows = document.querySelectorAll("#attendanceTable tbody tr");
+            const rows = document.querySelectorAll(".attendance-table tbody tr");
 
             rows.forEach(row => {
                 const columns = row.getElementsByTagName("td");
