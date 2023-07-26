@@ -61,7 +61,7 @@
 </head>
 <body>
     <h1>Welcome to the Home Page!</h1>
-    <p>Hello, {{ session['name'] }}!</p>
+    <p>Hello, {{ session['session_name'] }}!</p>
     <h1>Enter User Information and Capture Images</h1>
     <form id="userForm" method="POST">
         <label>Name:</label>
@@ -82,6 +82,7 @@
 
     <a href="/fr_page">Go to Face Recognition</a>
     <a href="/attendance">View Attendance</a>
+    <a href="/dashboard">Dashboard</a>
     <form action="/logout" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit">Logout</button>

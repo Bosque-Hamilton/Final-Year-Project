@@ -79,7 +79,7 @@ def index():
             except mysql.connector.Error as err:
                 return f"Error: {err}"
 
-        return render_template('index.html', name=session['name'])
+        return render_template('index.html', name=session['session_name'])
     else:
         # User is not logged in, redirect to login page
         return redirect(url_for('login'))
@@ -181,36 +181,98 @@ def recognize_faces(image):
 #         print(f"Error: {err}")
 #         return None
 
-# def record_attendance(student_id, name):
-#     # Function to record attendance in the attendance table
-#     try:
-#         connection = mysql.connector.connect(
-#             host=mysql_host,
-#             user=mysql_user,
-#             password=mysql_password,
-#             database=mysql_database
-#         )
+def record_attendance(student_id, name):
+    # Function to record attendance in the attendance table
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_host,
+            user=mysql_user,
+            password=mysql_password,
+            database=mysql_database
+        )
 
-#         cursor = connection.cursor()
+        cursor = connection.cursor()
 
-#         # Get the current time and date
-#         current_time = datetime.datetime.now().time()
-#         current_date = datetime.datetime.now().date()
+        # Get the current time and date
+        current_time = datetime.datetime.now().time()
+        current_date = datetime.datetime.now().date()
 
-#         # Define the SQL query to insert attendance record
-#         insert_query = "INSERT INTO attendance (name, student_id, time, date) VALUES (%s, %s, %s, %s)"
-#         cursor.execute(insert_query, (name, student_id, current_time, current_date))
+        # Define the SQL query to insert attendance record
+        insert_query = "INSERT INTO attendance (name, student_id, time, date) VALUES (%s, %s, %s, %s)"
+        cursor.execute(insert_query, (name, student_id, current_time, current_date))
 
-#         # Commit changes to the database
-#         connection.commit()
+        # Commit changes to the database
+        connection.commit()
 
-#         cursor.close()
-#         connection.close()
+        cursor.close()
+        connection.close()
 
-#     except mysql.connector.Error as err:
-#         print(f"Error: {err}")
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
 
-def gen_frames():
+def update_attendance(name):
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_host,
+            user=mysql_user,
+            password=mysql_password,
+            database=mysql_database
+        )
+        cursor = connection.cursor()
+
+        count_query = "SELECT COUNT(*) FROM attendance WHERE name = %s"
+        cursor.execute(count_query, (name,))
+        result = cursor.fetchone()
+        attendance_count = result[0]
+
+        # Define the SQL query to update the total_attendance column for the given student name
+        update_query = "UPDATE student SET total_attendance = %s WHERE name = %s"
+        cursor.execute(update_query, (attendance_count, name))
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+    except mysql.connector.Error as err:
+        print(f"Error updating attendance: {err}")
+        return None
+
+def update_last_attendance(name):
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_host,
+            user=mysql_user,
+            password=mysql_password,
+            database=mysql_database
+        )
+        cursor = connection.cursor()
+
+        # Get the latest attendance time for the given name
+        latest_attendance_query = "SELECT MAX(time) FROM attendance WHERE name = %s"
+        cursor.execute(latest_attendance_query, (name,))
+        latest_attendance_time = cursor.fetchone()[0]
+
+        if latest_attendance_time is not None:
+            # Create a datetime object with the current date and add the timedelta to it
+            current_date = datetime.date.today()
+            latest_attendance_datetime = datetime.datetime.combine(current_date, datetime.time()) + latest_attendance_time
+
+            # Convert the datetime object to a string
+            latest_attendance_time_str = latest_attendance_datetime.strftime("%Y-%m-%d %H:%M:%S")
+
+            # Update the last_attendance column in the student table
+            update_last_attendance_query = "UPDATE student SET last_attendance = %s WHERE name = %s"
+            cursor.execute(update_last_attendance_query, (latest_attendance_time_str, name))
+            connection.commit()
+
+        cursor.close()
+        connection.close()
+
+    except mysql.connector.Error as err:
+        print(f"Error updating last_attendance: {err}")
+
+
+def gen_frames(session_name):
     try:
         connection = mysql.connector.connect(
             host=mysql_host,
@@ -250,22 +312,19 @@ def gen_frames():
 
                 # Record attendance for the frame (all recognized faces)
                 for name in face_names:
-                    select_query = "SELECT student_id FROM student WHERE name = %s"
+                    select_query = "SELECT student_id, course, year FROM student WHERE name = %s"
                     cursor.execute(select_query, (name,))  # Pass name as a single-element tuple
 
                     res = cursor.fetchone()
-                    student_id = res[0]
-                    
-                    # Define the SQL query to check if an attendance record already exists within the last 2 hours
-                    check_existing_query = "SELECT COUNT(*) FROM attendance WHERE name = %s AND date = %s AND time >= %s"
-                    two_hours_ago = (datetime.datetime.now() - datetime.timedelta(hours=2)).time()
+                    if res is not None:
+                        student_id, course, year = res
 
-                    cursor.execute(check_existing_query, (name, str(datetime.date.today()), str(two_hours_ago)))
-                    result = cursor.fetchone()
-                    attendance_count = result[0]
+                        # Define the SQL query to check if an attendance record already exists within the last 2 hours
+                        check_existing_query = "SELECT COUNT(*) FROM attendance WHERE name = %s AND date = %s AND time >= %s"
+                        two_hours_ago = (datetime.datetime.now() - datetime.timedelta(hours=2)).time()
 
-                    # Check if the result is not None before accessing its elements
-                    if result is not None:
+                        cursor.execute(check_existing_query, (name, str(datetime.date.today()), str(two_hours_ago)))
+                        result = cursor.fetchone()
                         attendance_count = result[0]
 
                         if attendance_count == 0:
@@ -275,16 +334,18 @@ def gen_frames():
                             current_date = datetime.date.today()
 
                             # Define the SQL query to insert attendance record
-                            insert_query = "INSERT INTO attendance (name, student_id, time, date) VALUES (%s, %s, %s, %s)"
+                            insert_query = "INSERT INTO attendance (name, student_id, course, student_year, lecturer, time, date) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                             if student_id is not None:
-                                cursor.execute(insert_query, (name, student_id, str(current_time), str(current_date)))
+                                cursor.execute(insert_query, (name, student_id, course, year, session_name, str(current_time), str(current_date)))
                                 connection.commit()
                                 print("Attendance recorded.")
                             else:
                                 print("Student ID not found for the recognized name.")
-                        else:
-                            print("Attendance already recorded within the last 2 hours.")
 
+                # Update the total_attendance and last_attendance columns in the student table
+                for name in face_names:
+                    update_attendance(name)
+                    update_last_attendance(name)
 
                 # Display the results
                 for faceLoc, name in zip(face_locations, face_names):
@@ -307,7 +368,9 @@ def gen_frames():
     except mysql.connector.Error as err:
         print(f"Error: {err}")
         return None
-    
+
+
+
 @app.route('/attendance')
 def view_attendance():
     try:
@@ -344,7 +407,8 @@ def fr_page():
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    session_name = session.get('session_name', 'Unknown')
+    return Response(gen_frames(session_name), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -420,7 +484,7 @@ def login():
                 # Login successful
                 # You can store the lecturer's information in the session for future use
                 session['user_id'] = result[0]
-                session['name'] = result[1]
+                session['session_name'] = result[1]
                 session['email'] = result[2]
                 # Add more fields from the lecturer table as needed
 
@@ -447,31 +511,31 @@ def logout():
 @app.route('/dashboard')
 def dashboard():
     # Check if the user is logged in by verifying the 'user_id' in the session
-    if 'user_id' not in session:
+    if 'user_id' in session:
+        try:
+            # Connect to the MySQL database
+            connection = mysql.connector.connect(
+                host=mysql_host,
+                user=mysql_user,
+                password=mysql_password,
+                database=mysql_database
+            )
+            cursor = connection.cursor()
+
+            # Fetch attendance data from the database
+            select_query = "SELECT student.name, student.student_id, attendance.time, attendance.date FROM attendance JOIN student ON attendance.student_id = student.student_id"
+            cursor.execute(select_query)
+            attendance_data = cursor.fetchall()
+
+            cursor.close()
+            connection.close()
+
+            return render_template('dashboard.html', attendance_data=attendance_data)
+
+        except mysql.connector.Error as err:
+            return f"Error: {err}"
+    else:
         return redirect('/')
-
-    try:
-        # Connect to the MySQL database
-        connection = mysql.connector.connect(
-            host=mysql_host,
-            user=mysql_user,
-            password=mysql_password,
-            database=mysql_database
-        )
-        cursor = connection.cursor()
-
-        # Fetch attendance data from the database
-        select_query = "SELECT name, student_id, time, date FROM attendance"
-        cursor.execute(select_query)
-        attendance_data = cursor.fetchall()
-
-        cursor.close()
-        connection.close()
-
-        return render_template('dashboard.html', attendance_data=attendance_data)
-
-    except mysql.connector.Error as err:
-        return f"Error: {err}"
 
 
 

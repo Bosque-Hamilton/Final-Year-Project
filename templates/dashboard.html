@@ -108,6 +108,16 @@
             <li class="text-white text-xl font-semibold rounded-lg p-3 transition">
                 <a href="#" class="block">Attendance</a>
             </li>
+            <li class="text-white text-xl font-semibold rounded-lg p-3 transition">
+                <a href="#" class="block">Add a student</a>
+            </li>
+            <li class="text-white text-xl font-semibold rounded-lg p-3 transition">
+                <a href="#" class="block">Record Attendance</a>
+            </li>
+            <form action="/logout" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit">Logout</button>
+            </form>
             <!-- Add more sidebar items as needed -->
         </ul>
     </div>
@@ -119,6 +129,7 @@
 
         <!-- Attendance table -->
         <main>
+            <p>Hello, {{ session['session_name'] }}!</p>
             <h1 class="text-3xl font-semibold mb-8 mt-12">Attendance Data</h1>
             <input class="search-input" type="text" id="searchInput" placeholder="Search for names..">
 
