@@ -15,8 +15,12 @@ mysql_database = 'face_recognition_db'
 def findEncodings(imagesList):
     encodeList = []
     for img in imagesList:
-        encode = face_recognition.face_encodings(img)[0]
-        encodeList.append(encode)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        face_encodings = face_recognition.face_encodings(img)
+        if len(face_encodings) > 0:
+            # Take the first face encoding (if multiple faces detected, you may handle them differently)
+            encode = face_encodings[0]
+            encodeList.append(encode)
 
     return encodeList
 

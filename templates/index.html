@@ -64,11 +64,36 @@
     <p>Hello, {{ session['session_name'] }}!</p>
     <h1>Enter User Information and Capture Images</h1>
     <form id="userForm" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label>Name:</label>
         <input type="text" name="name" required><br><br>
 
         <label>Course:</label>
         <input type="text" name="course"><br><br>
+
+        <label>Email Address</label>
+        <input type="email" name="email" placeholder="Enter email address" required />
+
+        <div class="gender-box">
+            <h3>Gender</h3>
+            <div class="gender-option">
+                <div class="gender">
+                    <input type="radio" id="check-male" name="gender" value="Male" checked />
+                    <label for="check-male">Male</label>
+                </div>
+                <div class="gender">
+                    <input type="radio" id="check-female" name="gender" value="Female" />
+                    <label for="check-female">Female</label>
+                </div>
+                <div class="gender">
+                    <input type="radio" id="check-other" name="gender" value="Prefer not to say" />
+                    <label for="check-other">Other</label>
+                </div>
+            </div>
+        </div>
+
+        <label>Date of birth</label>
+        <input type="date" id="date_of_birth" name="date_of_birth" placeholder="Enter date of birth" required />
 
         <label>Year:</label>
         <input type="number" name="year" required><br><br>
@@ -91,39 +116,29 @@
     <canvas id="canvas" style="display: none;" width="640" height="480"></canvas>
 
     <script>
-        let canvas = document.getElementById("canvas");
-        let context = canvas.getContext("2d");
-        let captureCount = 0;
+    let canvas = document.getElementById("canvas");
+    let context = canvas.getContext("2d");
+    let captureCount = 0;
+    let imageCaptured = false; // Flag to track whether the image has been captured
 
-        async function captureImage() {
-            if (captureCount < 1) {
-                try {
-                    const constraints = { video: true };
-                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    const video = document.createElement("video");
-                    video.srcObject = stream;
-                    video.onloadedmetadata = function () {
-                        video.play();
-                        setTimeout(function () {
-                            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                            canvas.style.display = "block";
-                            captureCount++;
-                            document.getElementById("captureButton").disabled = true;
-                            stream.getTracks().forEach(function (track) {
-                                track.stop();
-                            });
-                            const imageData = canvas.toDataURL("image/jpeg");
-                            document.getElementById("userForm").insertAdjacentHTML(
-                                "beforeend",
-                                '<input type="hidden" name="imageData" value="' + imageData + '">'
-                            );
-                        }, 2000); // Capture an image after 2 seconds
-                    };
-                } catch (error) {
-                    console.error("Error accessing the webcam: ", error);
-                }
+    async function captureImage() {
+        if (!imageCaptured) { // Check if the image has not been captured
+            try {
+                const imageData = await fetch('/capture_image?image_name=' + document.getElementById("name").value).then(response => response.text());
+                const image = new Image();
+                image.src = 'data:image/jpeg;base64,' + imageData;
+                image.onload = function () {
+                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    canvas.style.display = "block";
+                    captureCount++;
+                    document.getElementById("captureButton").disabled = true;
+                    imageCaptured = true; // Set the flag to true after capturing the image
+                };
+            } catch (error) {
+                console.error("Error capturing the image: ", error);
             }
         }
-    </script>
+    }
+</script>
 </body>
 </html>

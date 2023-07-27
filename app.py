@@ -5,6 +5,7 @@ import numpy as np
 import mysql.connector
 from PIL import Image
 import os
+import io
 import cvzone
 import pickle
 from flask_wtf import CSRFProtect
@@ -27,6 +28,71 @@ mysql_user = 'root'
 mysql_password = ''
 mysql_database = 'face_recognition_db'
 
+def findEncodings(imagesList):
+    encodeList = []
+    for img in imagesList:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        face_encodings = face_recognition.face_encodings(img)
+        if len(face_encodings) > 0:
+            # Take the first face encoding (if multiple faces detected, you may handle them differently)
+            encode = face_encodings[0]
+            encodeList.append(encode)
+
+    return encodeList
+
+def save_image_from_blob(image_blob, image_name):
+    with Image.open(io.BytesIO(image_blob)) as img:
+        image_file_path = os.path.join("images", f"{image_name}.jpg")
+        img.save(image_file_path)
+
+
+
+def read_images_from_sql():
+    connection = mysql.connector.connect(
+        host=mysql_host,
+        user=mysql_user,
+        password=mysql_password,
+        database=mysql_database
+    )
+
+    cursor = connection.cursor()
+
+    select_query = "SELECT image_name, image_data FROM Images"
+    cursor.execute(select_query)
+    images_data = cursor.fetchall()
+
+    imgList = []
+    image_names = []
+
+    for image_name, image_data in images_data:
+        save_image_from_blob(image_data, image_name)
+
+        img = cv2.imread(os.path.join("images", f"{image_name}.jpg"))
+        imgList.append(img)
+        image_names.append(image_name)
+
+    cursor.close()
+    connection.close()
+
+    return imgList, image_names
+
+
+
+print("Reading images from SQL and saving to the 'images' folder...")
+imgList, image_names = read_images_from_sql()
+
+print("Encoding Started ...")
+encodeListKnown = findEncodings(imgList)
+encodeListKnownWithNames = [encodeListKnown, image_names]
+print("Encoding Complete")
+
+# Save encoded face data and image names to a file
+file = open("EncodeFile.p", 'wb')
+pickle.dump(encodeListKnownWithNames, file)
+file.close()
+print("File Saved")
+
+
 
 @app.route('/add_prsn', methods=['GET', 'POST'])
 def index():
@@ -37,6 +103,9 @@ def index():
             student_id = request.form['student_id']
             course = request.form['course']
             year = int(request.form['year'])
+            email = request.form['email']
+            gender = request.form['gender']
+            date_of_birth = request.form['date_of_birth']
 
             # Capture an image from the webcam
             image = capture_image()
@@ -53,8 +122,8 @@ def index():
                 cursor = connection.cursor()
 
                 # Define the SQL query to insert user information
-                insert_query = "INSERT INTO student (name, student_id, course, year) VALUES (%s, %s, %s, %s)"
-                cursor.execute(insert_query, (name, student_id, course, year))
+                insert_query = "INSERT INTO student (name, student_id, email, gender, date_of_birth, course, year) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                cursor.execute(insert_query, (name, student_id,email, gender, date_of_birth, course, year))
 
                 image_buffer = BytesIO()
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -89,7 +158,7 @@ def capture_image():
     camera = cv2.VideoCapture(0)
 
     _, image = camera.read()
-    #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     camera.release()
 
@@ -107,8 +176,6 @@ if os.path.exists(file_path):
 else:
     print(f"Error: File '{file_path}' does not exist.")
 
-# ... (rest of the code)
-
 
 
 def recognize_faces(image):
@@ -119,9 +186,9 @@ def recognize_faces(image):
             password=mysql_password,
             database=mysql_database
         )
-        
+
         cursor = connection.cursor()
-    
+
         # Function to recognize faces in the given image and get student ID and name
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         face_locations = face_recognition.face_locations(rgb_image)
@@ -130,7 +197,7 @@ def recognize_faces(image):
         recognized_students = []
 
         for face_encoding in face_encodings:
-            
+
             # Perform face recognition
             matches = face_recognition.compare_faces(encodeListKnown, face_encoding)
             name = "Unknown"
@@ -143,14 +210,14 @@ def recognize_faces(image):
 
 
             recognized_students.append(name)
-            
-            
+
+
         return recognized_students
-    
+
     except mysql.connector.Error as err:
         print(f"Error: {err}")
         return None
-    
+
 
 # def get_student_id_by_name(name):
 #     # Function to retrieve student_id by name from the student table
@@ -270,9 +337,9 @@ def update_last_attendance(name):
 
     except mysql.connector.Error as err:
         print(f"Error updating last_attendance: {err}")
-
-
+        
 def gen_frames(session_name):
+
     try:
         connection = mysql.connector.connect(
             host=mysql_host,
@@ -303,8 +370,10 @@ def gen_frames(session_name):
                     matches = face_recognition.compare_faces(encodeListKnown, face_encoding)
                     name = "Unknown"
 
-                    if True in matches:
-                        best_match_index = np.argmax(matches)
+                    face_distances = face_recognition.face_distance(encodeListKnown, face_encoding)
+                    best_match_index = np.argmin(face_distances)
+
+                    if matches[best_match_index]:
                         name = image_names[best_match_index]
                         name = name.replace('.jpg', '')
 
@@ -350,11 +419,23 @@ def gen_frames(session_name):
                 # Display the results
                 for faceLoc, name in zip(face_locations, face_names):
                     # Scale back up face locations since the frame we detected in was scaled to 1/4 size
+                    # y1 top *= 4
+                    # x2 right *= 4
+                    # y2 bottom *= 4
+                    # x1 left *= 4
                     y1, x2, y2, x1 = faceLoc
                     y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                    bbox = 10 + x1, 10 + y1, x2 - x1, y2 - y1
+                    img = cvzone.cornerRect(frame, bbox, rt=0)
+
+                    # Draw a box around the face
+                    # cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+
+                    # Draw a label with a name below the face
+                    # cv2.rectangle(frame, (x1, y2 - 35), (x2, y2), (42, 228, 57), cv2.BORDER_CONSTANT)
                     font = cv2.FONT_HERSHEY_DUPLEX
-                    cv2.putText(frame, name, (x1 + 6, y2 - 6), font, 0.5, (255, 255, 255), 1)
+                    # cv2.putText(frame, str(name), (x1 + 20, y2 - 20), font, 1.0, (255, 255, 255), 1)
+                    cv2.putText(frame, name, (x1 + 20,y2-6), font, 0.5, (255, 255, 255), 1)
 
                 ret, buffer = cv2.imencode('.jpg', frame)
                 frame = buffer.tobytes()
@@ -368,8 +449,6 @@ def gen_frames(session_name):
     except mysql.connector.Error as err:
         print(f"Error: {err}")
         return None
-
-
 
 @app.route('/attendance')
 def view_attendance():
@@ -522,9 +601,11 @@ def dashboard():
             )
             cursor = connection.cursor()
 
+            session_name = session.get('session_name', 'Unknown')
+
             # Fetch attendance data from the database
-            select_query = "SELECT student.name, student.student_id, attendance.time, attendance.date FROM attendance JOIN student ON attendance.student_id = student.student_id"
-            cursor.execute(select_query)
+            select_query = "SELECT student.name, student.student_id, attendance.lecturer, attendance.time, attendance.date FROM attendance JOIN student ON attendance.student_id = student.student_id WHERE attendance.lecturer = %s"
+            cursor.execute(select_query, (session_name,))
             attendance_data = cursor.fetchall()
 
             cursor.close()
