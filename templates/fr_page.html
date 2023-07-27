@@ -11,33 +11,5 @@
       <img id="video_feed" src="{{ url_for('video_feed') }}" class="img-fluid">
     </div>
   </div>
-  <div class="row mt-3">
-    <div class="col-md-6">
-      <button id="start_btn" class="btn btn-primary">Start Face Recognition</button>
-      <button id="stop_btn" class="btn btn-danger">Stop Face Recognition</button>
-    </div>
-  </div>
-</div>
-<script>
-  // JavaScript code to handle the start and stop buttons using AJAX
-  document.addEventListener("DOMContentLoaded", function() {
-    const startBtn = document.getElementById("start_btn");
-    const stopBtn = document.getElementById("stop_btn");
-
-    startBtn.addEventListener("click", function() {
-      // Send AJAX request to start face recognition
-      fetch("/start_face_recognition", { method: "POST" })
-        .then(response => response.text())
-        .then(message => console.log(message));
-    });
-
-    stopBtn.addEventListener("click", function() {
-      // Send AJAX request to stop face recognition
-      fetch("/stop_face_recognition", { method: "POST" })
-        .then(response => response.text())
-        .then(message => console.log(message));
-    });
-  });
-</script>
 </body>
 </html>

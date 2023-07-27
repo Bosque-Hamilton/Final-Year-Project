@@ -337,7 +337,7 @@ def update_last_attendance(name):
 
     except mysql.connector.Error as err:
         print(f"Error updating last_attendance: {err}")
-        
+
 def gen_frames(session_name):
 
     try:
@@ -379,6 +379,36 @@ def gen_frames(session_name):
 
                     face_names.append(name)
 
+                # Update the attendance for unrecognized faces (not recorded)
+                for name in image_names:
+                    if name not in face_names:
+                        select_query = "SELECT student_id, course, year FROM student WHERE name = %s"
+                        cursor.execute(select_query, (name,))  # Pass name as a single-element tuple
+                        res = cursor.fetchone()
+
+                        if res is not None:
+                            student_id, course, year = res
+                            current_time = datetime.datetime.now().time()
+                            current_date = datetime.date.today()
+
+                            # Check if an attendance record already exists within the last 2 hours for the unrecognized face
+                            check_existing_query = "SELECT COUNT(*) FROM attendance WHERE name = %s AND date = %s AND time >= %s"
+                            two_hours_ago = (datetime.datetime.now() - datetime.timedelta(hours=2)).time()
+
+                            cursor.execute(check_existing_query,
+                                           (name, str(datetime.date.today()), str(two_hours_ago)))
+                            result = cursor.fetchone()
+                            attendance_count = result[0]
+
+                            if attendance_count == 0:
+                                # If no attendance record exists within the last 2 hours, insert a new record with "absent" attendance
+                                insert_query = "INSERT INTO attendance (name, student_id, course, student_year, lecturer, time, date, attendance) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                                cursor.execute(insert_query, (
+                                    name, student_id, course, year, session_name, str(current_time),
+                                    str(current_date), "absent"))
+                                connection.commit()
+                                print("Attendance recorded as absent for:", name)
+
                 # Record attendance for the frame (all recognized faces)
                 for name in face_names:
                     select_query = "SELECT student_id, course, year FROM student WHERE name = %s"
@@ -410,6 +440,28 @@ def gen_frames(session_name):
                                 print("Attendance recorded.")
                             else:
                                 print("Student ID not found for the recognized name.")
+                        else:
+                            # Update the attendance column to "present" for an existing record within the last 2 hours
+                            update_attendance_query = "UPDATE attendance SET attendance = %s, time = %s WHERE name = %s AND date = %s AND time >= %s"
+                            current_time = datetime.datetime.now().time()
+
+                            # Check if the attendance is already marked as "present" for the given name and date
+                            check_present_query = "SELECT COUNT(*) FROM attendance WHERE name = %s AND date = %s AND attendance = %s AND time >= %s"
+                            cursor.execute(check_present_query,
+                                           (name, str(datetime.date.today()), "present", str(two_hours_ago)))
+                            result = cursor.fetchone()
+                            attendance_count = result[0]
+
+                            if attendance_count == 0:
+                                # If no attendance record with "present" exists within the last 2 hours, update the attendance
+                                cursor.execute(update_attendance_query, (
+                                "present", str(current_time), name, str(datetime.date.today()), str(two_hours_ago)))
+                                connection.commit()
+                                print("Attendance updated for:", name)
+                            else:
+                                pass
+                                # print("Attendance already marked as 'present' for:", name)
+
 
                 # Update the total_attendance and last_attendance columns in the student table
                 for name in face_names:
