@@ -204,7 +204,7 @@ def recognize_faces(image):
             student_id = None
 
             if True in matches:
-                best_match_index = np.argmax(matches)
+                best_match_index = np.argmin(matches)
                 name = image_names[best_match_index]
                 name = name.replace('.jpg', '')
 
@@ -367,11 +367,13 @@ def gen_frames(session_name):
 
                 for face_encoding in face_encodings:
                     # Perform face recognition
-                    matches = face_recognition.compare_faces(encodeListKnown, face_encoding)
+                    matches = face_recognition.compare_faces(encodeListKnown, face_encoding, tolerance=0.4)
                     name = "Unknown"
 
                     face_distances = face_recognition.face_distance(encodeListKnown, face_encoding)
                     best_match_index = np.argmin(face_distances)
+
+                    # print("Face Distances:", face_distances)
 
                     if matches[best_match_index]:
                         name = image_names[best_match_index]
@@ -656,7 +658,7 @@ def dashboard():
             session_name = session.get('session_name', 'Unknown')
 
             # Fetch attendance data from the database
-            select_query = "SELECT student.name, student.student_id, attendance.lecturer, attendance.time, attendance.date FROM attendance JOIN student ON attendance.student_id = student.student_id WHERE attendance.lecturer = %s"
+            select_query = "SELECT student.name, student.student_id, attendance.lecturer, attendance.time, attendance.date, attendance.attendance FROM attendance JOIN student ON attendance.student_id = student.student_id WHERE attendance.lecturer = %s"
             cursor.execute(select_query, (session_name,))
             attendance_data = cursor.fetchall()
 
@@ -670,7 +672,34 @@ def dashboard():
     else:
         return redirect('/')
 
+@app.route('/student_info/<string:student_name>', methods=['GET'])
+def student_info(student_name):
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_host,
+            user=mysql_user,
+            password=mysql_password,
+            database=mysql_database
+        )
+        cursor = connection.cursor()
 
+        # Define the SQL query to retrieve student information by name
+        select_query = "SELECT * FROM student WHERE name = %s"
+        cursor.execute(select_query, (student_name,))
+        student_data = cursor.fetchone()
+
+        cursor.close()
+        connection.close()
+
+        if student_data:
+            # If the student data is found, pass it to the template and render the student_info.html page
+            return render_template('student_info.html', student_data=student_data)
+        else:
+            # If student data is not found, display an error message or redirect to another page
+            return "Student information not found."
+
+    except mysql.connector.Error as err:
+        return f"Error: {err}"
 
 
 if __name__ == "__main__":

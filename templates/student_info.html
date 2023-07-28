@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Information</title>
+</head>
+<body>
+    <h1>Student Information</h1>
+    {% if student_data %}
+        <p><strong>Name:</strong> {{ student_data[1] }}</p>
+        <p><strong>Student ID:</strong> {{ student_data[0] }}</p>
+        <p><strong>Course:</strong> {{ student_data[2] }}</p>
+        <p><strong>Year:</strong> {{ student_data[3] }}</p>
+        <!-- Add other student information fields here -->
+    {% else %}
+        <p>Student information not found.</p>
+    {% endif %}
+</body>
+</html>
