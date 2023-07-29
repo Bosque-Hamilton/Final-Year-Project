@@ -45,8 +45,6 @@ def save_image_from_blob(image_blob, image_name):
         image_file_path = os.path.join("images", f"{image_name}.jpg")
         img.save(image_file_path)
 
-
-
 def read_images_from_sql():
     connection = mysql.connector.connect(
         host=mysql_host,
@@ -76,8 +74,6 @@ def read_images_from_sql():
 
     return imgList, image_names
 
-
-
 print("Reading images from SQL and saving to the 'images' folder...")
 imgList, image_names = read_images_from_sql()
 
@@ -91,7 +87,6 @@ file = open("EncodeFile.p", 'wb')
 pickle.dump(encodeListKnownWithNames, file)
 file.close()
 print("File Saved")
-
 
 
 @app.route('/add_prsn', methods=['GET', 'POST'])
@@ -176,107 +171,6 @@ if os.path.exists(file_path):
 else:
     print(f"Error: File '{file_path}' does not exist.")
 
-
-
-def recognize_faces(image):
-    try:
-        connection = mysql.connector.connect(
-            host=mysql_host,
-            user=mysql_user,
-            password=mysql_password,
-            database=mysql_database
-        )
-
-        cursor = connection.cursor()
-
-        # Function to recognize faces in the given image and get student ID and name
-        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        face_locations = face_recognition.face_locations(rgb_image)
-        face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
-
-        recognized_students = []
-
-        for face_encoding in face_encodings:
-
-            # Perform face recognition
-            matches = face_recognition.compare_faces(encodeListKnown, face_encoding)
-            name = "Unknown"
-            student_id = None
-
-            if True in matches:
-                best_match_index = np.argmin(matches)
-                name = image_names[best_match_index]
-                name = name.replace('.jpg', '')
-
-
-            recognized_students.append(name)
-
-
-        return recognized_students
-
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-        return None
-
-
-# def get_student_id_by_name(name):
-#     # Function to retrieve student_id by name from the student table
-#     try:
-#         connection = mysql.connector.connect(
-#             host=mysql_host,
-#             user=mysql_user,
-#             password=mysql_password,
-#             database=mysql_database
-#         )
-
-#         cursor = connection.cursor()
-
-#         # Define the SQL query to retrieve student_id by name
-#         select_query = "SELECT student_id FROM student WHERE name = %s"
-#         cursor.execute(select_query, (name))
-#         result = cursor.fetchone()
-
-#         cursor.close()
-#         connection.close()
-
-#         if result:
-#             return result[0]
-#         else:
-#             return None
-
-#     except mysql.connector.Error as err:
-#         print(f"Error: {err}")
-#         return None
-
-def record_attendance(student_id, name):
-    # Function to record attendance in the attendance table
-    try:
-        connection = mysql.connector.connect(
-            host=mysql_host,
-            user=mysql_user,
-            password=mysql_password,
-            database=mysql_database
-        )
-
-        cursor = connection.cursor()
-
-        # Get the current time and date
-        current_time = datetime.datetime.now().time()
-        current_date = datetime.datetime.now().date()
-
-        # Define the SQL query to insert attendance record
-        insert_query = "INSERT INTO attendance (name, student_id, time, date) VALUES (%s, %s, %s, %s)"
-        cursor.execute(insert_query, (name, student_id, current_time, current_date))
-
-        # Commit changes to the database
-        connection.commit()
-
-        cursor.close()
-        connection.close()
-
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-
 def update_attendance(name):
     try:
         connection = mysql.connector.connect(
@@ -287,15 +181,27 @@ def update_attendance(name):
         )
         cursor = connection.cursor()
 
-        count_query = "SELECT COUNT(*) FROM attendance WHERE name = %s"
-        cursor.execute(count_query, (name,))
-        result = cursor.fetchone()
-        attendance_count = result[0]
+        # Calculate the total attendance count for the given student with "present" attendance
+        count_present_query = "SELECT COUNT(*) FROM attendance WHERE name = %s AND attendance = 'present'"
+        cursor.execute(count_present_query, (name,))
+        result_present = cursor.fetchone()
+        total_attendance_count = result_present[0]
 
-        # Define the SQL query to update the total_attendance column for the given student name
-        update_query = "UPDATE student SET total_attendance = %s WHERE name = %s"
-        cursor.execute(update_query, (attendance_count, name))
+        # Calculate the total lectures missed count for the given student with "absent" attendance
+        count_absent_query = "SELECT COUNT(*) FROM attendance WHERE name = %s AND attendance = 'absent'"
+        cursor.execute(count_absent_query, (name,))
+        result_absent = cursor.fetchone()
+        total_lectures_missed = result_absent[0]
+
+        print("Total Attendance Count:", total_attendance_count)
+        print("Total Lectures Missed:", total_lectures_missed)
+
+        # Update the total_attendance and total_lectures_missed columns in the student table
+        update_query = "UPDATE student SET total_attendance = %s, total_lectures_missed = %s WHERE name = %s"
+        cursor.execute(update_query, (total_attendance_count, total_lectures_missed, name))
         connection.commit()
+
+        print('Attendance Table Updated')
 
         cursor.close()
         connection.close()
@@ -303,6 +209,35 @@ def update_attendance(name):
     except mysql.connector.Error as err:
         print(f"Error updating attendance: {err}")
         return None
+
+def update_attendance_for_all_students():
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_host,
+            user=mysql_user,
+            password=mysql_password,
+            database=mysql_database
+        )
+        cursor = connection.cursor()
+
+        # Get all student names from the database
+        cursor.execute("SELECT name FROM student")
+        all_student_names = [name[0] for name in cursor.fetchall()]
+
+        # Update attendance for each student
+        for name in all_student_names:
+            update_attendance(name)
+
+        cursor.close()
+        connection.close()
+
+    except mysql.connector.Error as err:
+        print(f"Error updating attendance: {err}")
+        return None
+
+# Call the function to update attendance for all students
+update_attendance_for_all_students()
+
 
 def update_last_attendance(name):
     try:
@@ -326,6 +261,7 @@ def update_last_attendance(name):
 
             # Convert the datetime object to a string
             latest_attendance_time_str = latest_attendance_datetime.strftime("%Y-%m-%d %H:%M:%S")
+
 
             # Update the last_attendance column in the student table
             update_last_attendance_query = "UPDATE student SET last_attendance = %s WHERE name = %s"
@@ -367,7 +303,7 @@ def gen_frames(session_name):
 
                 for face_encoding in face_encodings:
                     # Perform face recognition
-                    matches = face_recognition.compare_faces(encodeListKnown, face_encoding, tolerance=0.4)
+                    matches = face_recognition.compare_faces(encodeListKnown, face_encoding, tolerance=0.42)
                     name = "Unknown"
 
                     face_distances = face_recognition.face_distance(encodeListKnown, face_encoding)
@@ -381,35 +317,7 @@ def gen_frames(session_name):
 
                     face_names.append(name)
 
-                # Update the attendance for unrecognized faces (not recorded)
-                for name in image_names:
-                    if name not in face_names:
-                        select_query = "SELECT student_id, course, year FROM student WHERE name = %s"
-                        cursor.execute(select_query, (name,))  # Pass name as a single-element tuple
-                        res = cursor.fetchone()
 
-                        if res is not None:
-                            student_id, course, year = res
-                            current_time = datetime.datetime.now().time()
-                            current_date = datetime.date.today()
-
-                            # Check if an attendance record already exists within the last 2 hours for the unrecognized face
-                            check_existing_query = "SELECT COUNT(*) FROM attendance WHERE name = %s AND date = %s AND time >= %s"
-                            two_hours_ago = (datetime.datetime.now() - datetime.timedelta(hours=2)).time()
-
-                            cursor.execute(check_existing_query,
-                                           (name, str(datetime.date.today()), str(two_hours_ago)))
-                            result = cursor.fetchone()
-                            attendance_count = result[0]
-
-                            if attendance_count == 0:
-                                # If no attendance record exists within the last 2 hours, insert a new record with "absent" attendance
-                                insert_query = "INSERT INTO attendance (name, student_id, course, student_year, lecturer, time, date, attendance) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-                                cursor.execute(insert_query, (
-                                    name, student_id, course, year, session_name, str(current_time),
-                                    str(current_date), "absent"))
-                                connection.commit()
-                                print("Attendance recorded as absent for:", name)
 
                 # Record attendance for the frame (all recognized faces)
                 for name in face_names:
@@ -452,22 +360,52 @@ def gen_frames(session_name):
                             cursor.execute(check_present_query,
                                            (name, str(datetime.date.today()), "present", str(two_hours_ago)))
                             result = cursor.fetchone()
-                            attendance_count = result[0]
+                            attendance_count_now = result[0]
 
-                            if attendance_count == 0:
+                            if attendance_count_now == 0:
                                 # If no attendance record with "present" exists within the last 2 hours, update the attendance
                                 cursor.execute(update_attendance_query, (
                                 "present", str(current_time), name, str(datetime.date.today()), str(two_hours_ago)))
                                 connection.commit()
                                 print("Attendance updated for:", name)
-                            else:
-                                pass
-                                # print("Attendance already marked as 'present' for:", name)
+                            # else:
+                            #     pass
+                            #     print("Attendance already marked as 'present' for:", name)
 
+                # Update the attendance for unrecognized faces (not recorded)
+                for name in image_names:
+                    if name not in face_names:
+                        select_query = "SELECT student_id, course, year FROM student WHERE name = %s"
+                        cursor.execute(select_query, (name,))  # Pass name as a single-element tuple
+                        res = cursor.fetchone()
+
+                        if res is not None:
+                            student_id, course, year = res
+                            current_time = datetime.datetime.now().time()
+                            current_date = datetime.date.today()
+
+                            # Check if an attendance record already exists within the last 2 hours for the unrecognized face
+                            check_existing_query = "SELECT COUNT(*) FROM attendance WHERE name = %s AND date = %s AND time >= %s"
+                            two_hours_ago = (
+                                        datetime.datetime.now() - datetime.timedelta(hours=2)).time()
+
+                            cursor.execute(check_existing_query,
+                                           (name, str(datetime.date.today()), str(two_hours_ago)))
+                            result = cursor.fetchone()
+                            attendance_count = result[0]
+
+                            if attendance_count == 0:
+                                # If no attendance record exists within the last 2 hours, insert a new record with "absent" attendance
+                                insert_query = "INSERT INTO attendance (name, student_id, course, student_year, lecturer, time, date, attendance) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                                cursor.execute(insert_query, (
+                                    name, student_id, course, year, session_name, str(current_time),
+                                    str(current_date), "absent"))
+                                connection.commit()
+                                print("Attendance recorded as absent for:", name)
 
                 # Update the total_attendance and last_attendance columns in the student table
                 for name in face_names:
-                    update_attendance(name)
+                    # update_attendance(name)
                     update_last_attendance(name)
 
                 # Display the results
@@ -688,12 +626,25 @@ def student_info(student_name):
         cursor.execute(select_query, (student_name,))
         student_data = cursor.fetchone()
 
+        # Define the SQL query to retrieve the image_data for the student from the images table
+        select_image_query = "SELECT image_data FROM images WHERE image_name = %s"
+        cursor.execute(select_image_query, (student_name,))
+        image_data = cursor.fetchone()
+
         cursor.close()
         connection.close()
 
         if student_data:
-            # If the student data is found, pass it to the template and render the student_info.html page
-            return render_template('student_info.html', student_data=student_data)
+            # If the student data is found, pass it along with image_data to the template
+            if image_data:
+                # The image data is stored in a tuple, so we need to extract it from the first element
+                image_data_blob = image_data[0]
+                # Convert the BLOB image_data back to JPEG format
+                image_data_base64 = base64.b64encode(image_data_blob).decode('utf-8')
+            else:
+                image_data_base64 = None
+
+            return render_template('student_info.html', student_data=student_data, image_data_base64=image_data_base64)
         else:
             # If student data is not found, display an error message or redirect to another page
             return "Student information not found."
@@ -705,4 +656,4 @@ def student_info(student_name):
 if __name__ == "__main__":
     
     
-    app.run(debug=True)
+    app.run()

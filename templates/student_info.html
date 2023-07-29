@@ -1,18 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Information</title>
 </head>
+
 <body>
     <h1>Student Information</h1>
     {% if student_data %}
-        <p><strong>Name:</strong> {{ student_data[1] }}</p>
-        <p><strong>Student ID:</strong> {{ student_data[0] }}</p>
-        <p><strong>Course:</strong> {{ student_data[2] }}</p>
-        <p><strong>Year:</strong> {{ student_data[3] }}</p>
-        <!-- Add other student information fields here -->
+        <div>
+            <h2>{{ student_data[1] }}</h2>
+            <p>Student ID: {{ student_data[0] }}</p>
+            <p>Course: {{ student_data[2] }}</p>
+            <p>Year: {{ student_data[3] }}</p>
+            <p>Total Attendance: {{ student_data[4] }}</p>
+            <p>Last Attendance: {{ student_data[5] }}</p>
+            <p>Email: {{ student_data[6] }}</p>
+            <p>Gender: {{ student_data[7] }}</p>
+            <p>Date of Birth: {{ student_data[8] }}</p>
+            <p>Total Lectures Missed: {{ student_data[9] }}</p>
+            <!-- Display other student details as needed -->
+        </div>
+        {% if image_data_base64 %}
+            <!-- Display the student image -->
+            <img src="data:image/jpeg;base64, {{ image_data_base64 }}" alt="Student Image" width="200">
+        {% else %}
+            <p>No image available for this student.</p>
+        {% endif %}
     {% else %}
         <p>Student information not found.</p>
     {% endif %}
 </body>
+
 </html>
