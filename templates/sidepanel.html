@@ -1,0 +1,21 @@
+<div class="bg-indigo-600 w-56 h-screen p-8">
+        <ul class="space-y-4">
+            <li class="text-white text-xl font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                <a href="#" class="block">Home</a>
+            </li>
+            <li class="text-white text-xl font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                <a href="#" class="block">Attendance</a>
+            </li>
+            <li class="text-white text-xl font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                <a href="#" class="block">Add a student</a>
+            </li>
+            <li class="text-white text-xl font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                <a href="#" class="block">Record Attendance</a>
+            </li>
+        </ul>
+        <form action="/logout" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                class="text-white text-xl font-semibold rounded-lg p-3 mt-4 bg-red-600 hover:bg-red-700 transition">Logout</button>
+        </form>
+</div>

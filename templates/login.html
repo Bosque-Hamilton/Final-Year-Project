@@ -8,10 +8,15 @@
     <!--<title>Lecturer Login</title>-->
     <!---Custom CSS File--->
     <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+
+    </style>
 </head>
 <body>
 <section class="container">
-    <header>Lecturer Login</header>
+    <h1>Face Recognition</h1>
+    <h2>Lecturer Login</h2>
     {% if error_message %}
     <div class="error">{{ error_message }}</div>
     {% endif %}
@@ -22,12 +27,49 @@
             <input type="email" name="email" placeholder="Enter email address" required />
         </div>
         <div class="input-box">
-            <label>Password</label>
-            <input type="password" name="password" placeholder="Enter password" required />
+            <label for="password">Password</label>
+            <div class="password-container">
+                <input type="password" id="password" name="password" placeholder="Enter password" required>
+                <span class="toggle-password" onclick="togglePasswordVisibility()">
+                    <i class="far fa-eye" id="eye-icon"></i>
+                </span>
+            </div>
         </div>
         <button type="submit">Login</button>
-        <a href="/signup" style="text-align:center">Register</a>
+        <div class="register--btn">
+            <a href="/signup" class="register--btn">Register</a>
+        </div>
     </form>
 </section>
+ <script>
+        function validateEmail() {
+            const emailInput = document.getElementById('email');
+            const emailError = document.getElementById('email-error');
+            const emailPattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+
+            if (!emailPattern.test(emailInput.value)) {
+                emailError.style.display = 'block';
+                return false;
+            }
+
+            emailError.style.display = 'none';
+            return true;
+        }
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('far', 'fa-eye');
+                eyeIcon.classList.add('fas', 'fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fas', 'fa-eye-slash');
+                eyeIcon.classList.add('far', 'fa-eye');
+            }
+        }
+    </script>
 </body>
 </html>

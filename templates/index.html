@@ -8,6 +8,10 @@
                 background-color: #f0f0f0;
                 margin: 0;
                 padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
             }
             h1 {
                 text-align: center;
@@ -17,8 +21,9 @@
                 margin: 0;
             }
             form {
-                max-width: 500px;
-                margin: 20px auto;
+                max-width: 400px;
+                width: 100%;
+                margin: 20px;
                 padding: 20px;
                 background-color: #fff;
                 border-radius: 5px;
@@ -30,7 +35,9 @@
                 margin-bottom: 5px;
             }
             input[type="text"],
-            input[type="number"] {
+            input[type="number"],
+            input[type="email"],
+            input[type="date"] {
                 width: 100%;
                 padding: 10px;
                 margin-bottom: 15px;
@@ -38,13 +45,27 @@
                 border-radius: 5px;
                 box-sizing: border-box;
             }
+            .gender-box {
+                margin-top: 20px;
+            }
+            .gender-box h3 {
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+            .gender-option {
+                display: flex;
+                align-items: center;
+                column-gap: 20px;
+            }
             button {
+                width: 100%;
                 padding: 10px 20px;
                 background-color: #333;
                 color: #fff;
                 border: none;
                 border-radius: 5px;
                 cursor: pointer;
+                transition: background 0.3s ease;
             }
             button:disabled {
                 background-color: #ccc;
@@ -57,6 +78,12 @@
                 color: #333;
                 text-decoration: none;
             }
+            canvas {
+                display: none;
+                width: 100%;
+                max-width: 640px;
+                height: auto;
+            }
         </style>
 </head>
 <body>
@@ -66,10 +93,10 @@
     <form id="userForm" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label>Name:</label>
-        <input type="text" name="name" required><br><br>
+        <input type="text" name="name" required><br>
 
         <label>Course:</label>
-        <input type="text" name="course"><br><br>
+        <input type="text" name="course"><br>
 
         <label>Email Address</label>
         <input type="email" name="email" placeholder="Enter email address" required />
@@ -96,12 +123,12 @@
         <input type="date" id="date_of_birth" name="date_of_birth" placeholder="Enter date of birth" required />
 
         <label>Year:</label>
-        <input type="number" name="year" required><br><br>
+        <input type="number" min="1" max="4" name="year" required>
 
         <label>Student ID:</label>
-        <input type="text" name="student_id" required><br><br>
+        <input type="text" name="student_id" required>
 
-        <button type="button" id="captureButton" onclick="captureImage()" >Capture Image</button>
+        <button type="button" id="captureButton" onclick="captureImage()">Capture Image</button>
         <button type="submit">Submit</button>
     </form>
 
@@ -113,32 +140,32 @@
         <button type="submit">Logout</button>
     </form>
 
-    <canvas id="canvas" style="display: none;" width="640" height="480"></canvas>
+    <canvas id="canvas" width="640" height="480"></canvas>
 
     <script>
-    let canvas = document.getElementById("canvas");
-    let context = canvas.getContext("2d");
-    let captureCount = 0;
-    let imageCaptured = false; // Flag to track whether the image has been captured
+        let canvas = document.getElementById("canvas");
+        let context = canvas.getContext("2d");
+        let captureCount = 0;
+        let imageCaptured = false; // Flag to track whether the image has been captured
 
-    async function captureImage() {
-        if (!imageCaptured) { // Check if the image has not been captured
-            try {
-                const imageData = await fetch('/capture_image?image_name=' + document.getElementById("name").value).then(response => response.text());
-                const image = new Image();
-                image.src = 'data:image/jpeg;base64,' + imageData;
-                image.onload = function () {
-                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-                    canvas.style.display = "block";
-                    captureCount++;
-                    document.getElementById("captureButton").disabled = true;
-                    imageCaptured = true; // Set the flag to true after capturing the image
-                };
-            } catch (error) {
-                console.error("Error capturing the image: ", error);
+        async function captureImage() {
+            if (!imageCaptured) { // Check if the image has not been captured
+                try {
+                    const imageData = await fetch('/capture_image?image_name=' + document.getElementById("name").value).then(response => response.text());
+                    const image = new Image();
+                    image.src = 'data:image/jpeg;base64,' + imageData;
+                    image.onload = function () {
+                        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                        canvas.style.display = "block";
+                        captureCount++;
+                        document.getElementById("captureButton").disabled = true;
+                        imageCaptured = true; // Set the flag to true after capturing the image
+                    };
+                } catch (error) {
+                    console.error("Error capturing the image: ", error);
+                }
             }
         }
-    }
-</script>
+    </script>
 </body>
 </html>

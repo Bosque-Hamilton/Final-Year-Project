@@ -2,14 +2,81 @@
 <html>
 <head>
     <title>Face Recognition Attendance System</title>
+    <!-- Include Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Add custom styles here (if needed) */
+    </style>
 </head>
 <body>
-    <h1>Face Recognition - Live Feed</h1>
-   <div class="container">
-  <div class="row">
-    <div class="col-md-6">
-      <img id="video_feed" src="{{ url_for('video_feed') }}" class="img-fluid">
+    <h1 class="text-4xl font-bold text-center my-8">Face Recognition - Live Feed</h1>
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="flex justify-center">
+                <img id="video_feed" src="{{ url_for('video_feed') }}" class="img-fluid">
+            </div>
+            <div>
+                <h2 class="text-3xl font-bold mb-4">Attendance Table</h2>
+                <table class="w-full table-auto bg-white rounded-lg shadow overflow-hidden attendance-table">
+                    <thead class="bg-gray-200 text-left text-gray-600 px-10">
+                        <tr class="text-left">
+                            <th class="py-2 text-left">Student Name</th>
+                            <th class="py-2 text-left">Student ID</th>
+                            <th class="py-2 text-left">Time</th>
+                            <th class="py-2 text-left">Date</th>
+                            <th class="py-2 text-left">Attendance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance_table_body">
+                        <!-- Attendance data will be dynamically added here via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-  </div>
+
+    <script>
+        function updateAttendanceTable() {
+            fetch('/attendance_data')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('attendance_table_body');
+                    tableBody.innerHTML = ''; // Clear existing data
+
+                    data.attendance_data.forEach(row => {
+                        const tr = document.createElement('tr');
+
+                        const nameTd = document.createElement('td');
+                        nameTd.textContent = row[0];
+                        tr.appendChild(nameTd);
+
+                        const studentIdTd = document.createElement('td');
+                        studentIdTd.textContent = row[1];
+                        tr.appendChild(studentIdTd);
+
+                        const timeTd = document.createElement('td');
+                        timeTd.textContent = row[2];
+                        tr.appendChild(timeTd);
+
+                        const dateTd = document.createElement('td');
+                        dateTd.textContent = row[3];
+                        tr.appendChild(dateTd);
+
+                        const attendanceTd = document.createElement('td');
+                        attendanceTd.textContent = row[4];
+                        tr.appendChild(attendanceTd);
+
+                        tableBody.appendChild(tr);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching attendance data:', error);
+                });
+        }
+
+        // Update the attendance table every 2 seconds (adjust as needed)
+        setInterval(updateAttendanceTable, 2000);
+    </script>
 </body>
 </html>
+

@@ -11,7 +11,8 @@
 </head>
 <body>
 <section class="container">
-    <header>Lecturer Signup</header>
+     <h1>Face Recognition</h1>
+     <h2>Lecturer Signup</h2>
     <form action="{{ url_for('signup') }}" class="form" method="POST">
         <!-- Add CSRF token for security -->
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -49,14 +50,26 @@
         </div>
         <div class="input-box">
             <label>Password</label>
-            <input type="password" id="password" name="password" placeholder="Enter password" required />
+            <div class="password-container">
+                <input type="password" id="password" name="password" placeholder="Enter password" required>
+                <span class="toggle-password" onclick="togglePasswordVisibility()">
+                    <i class="far fa-eye" id="eye-icon"></i>
+                </span>
+            </div>
         </div>
         <div class="input-box">
             <label>Confirm Password</label>
-            <input type="password" id="confirmPassword" name="confirm_password" placeholder="Confirm password" required />
+            <div class="password-container">
+                <input type="password" id="confirmPassword" name="confirm_password" placeholder="Confirm password" required />
+                <span class="toggle-password" onclick="togglePasswordVisibility()">
+                    <i class="far fa-eye" id="eye-icon_2"></i>
+                </span>
+            </div>
         </div>
         <button type="submit">Sign Up</button>
-        <a href="/" style="text-align:center">Already have an account? Login</a>
+        <div class="login--btn">
+            <a href="/">Already have an account? Login</a>
+        </div>
     </form>
 </section>
 <script>

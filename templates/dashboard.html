@@ -7,160 +7,130 @@
     <title>Dashboard</title>
     <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <style>
-        body {
-            font-family: "Poppins", sans-serif;
-            background-color: #f3f4f6;
-        }
-
-        .sidebar {
-            background-color: #6366f1;
-            width: 240px;
-            height: 100vh;
-            padding-top: 30px;
-            position: fixed;
-            top: 0;
-            left: 0;
-        }
-
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .sidebar li {
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-        }
-
-        .sidebar li:hover {
-            background-color: #4f46e5;
-            cursor: pointer;
-        }
-
-        .main-content {
-            margin-left: 240px;
-            padding: 30px;
-        }
-
-        .filter-section {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .filter-section h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .filter-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .attendance-table {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .attendance-table th,
-        .attendance-table td {
-            padding: 12px;
-            text-align: left;
-        }
-
-        .attendance-table th {
-            background-color: #f3f4f6;
-            font-weight: 600;
-        }
-
-        .attendance-table tr:hover {
-            background-color: #f9fafb;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/21cb155038.js" crossorigin="anonymous"></script>
 </head>
 
-<body>
-    <div class="sidebar">
-        <ul>
-            <li class="text-white text-xl font-semibold rounded-lg p-3 transition">
-                <a href="#" class="block">Home</a>
-            </li>
-            <li class="text-white text-xl font-semibold rounded-lg p-3 transition">
-                <a href="#" class="block">Attendance</a>
-            </li>
-            <li class="text-white text-xl font-semibold rounded-lg p-3 transition">
-                <a href="#" class="block">Add a student</a>
-            </li>
-            <li class="text-white text-xl font-semibold rounded-lg p-3 transition">
-                <a href="#" class="block">Record Attendance</a>
-            </li>
+<body class="font-poppins">
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="bg-indigo-600 w-64 flex flex-col justify-between h-screen p-2">
+            <div>
+                <h2 class="font-black p-2 tracking-wide text-2xl text-white">Face Recognition</h2>
+
+                <ul class="space-y-4 mt-14 text-lg font-poppins">
+                    <!-- Dashboard -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/dashboard" class="block">
+                            <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+                        </a>
+                    </li>
+                    <!-- Add a student -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/add_prsn" class="block">
+                            <i class="fas fa-user-plus mr-3"></i> Add a student
+                        </a>
+                    </li>
+                    <!-- Record Attendance -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/fr_page" class="block">
+                            <i class="fas fa-clipboard-list mr-3"></i> Record Attendance
+                        </a>
+                    </li>
+                    <!-- Edit Profile -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/edit-profile" class="block">
+                            <i class="fas fa-user-edit mr-3"></i> Edit Profile
+                        </a>
+                    </li>
+                </ul>
+            </div>
             <form action="/logout" method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit">Logout</button>
+                <button type="submit"
+                    class="text-white text-lg font-semibold hover:bg-indigo-700 w-full rounded-lg py-2 px-3 text-left transition">
+                    <i class="fa-solid fa-arrow-right-from-bracket mr-3"></i>Logout
+                </button>
             </form>
-            <!-- Add more sidebar items as needed -->
-        </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex flex-col flex-1 py-4 px-8">
+            <header>
+                <h1 class="text-2xl font-bold tracking-wide">Dashboard</h1>
+                <p class="text-gray-600 text-sm"><span id="todayDate"></span></p>
+            </header>
+
+            <!-- Attendance table -->
+            <main class="mt-14">
+                <div class="">
+                    <h2 class="text-5xl font-black tracking-wide">Welcome back, {{ session['session_name'] }}</h2>
+                    <p class="text-gray-600 mt-2">Manage the attendance records with our realtime face recognition attendance system.</p>
+                </div>
+                <div class="my-6 flex justify-between">
+                    <h1 class="text-2xl font-bold">Attendance Data</h1>
+                    <div class="flex items-center w-[200px] border rounded-lg px-6 py-2 focus-within:ring focus-within:border-indigo-500">
+                        <i class="fas fa-search text-gray-500"></i>
+                        <input
+                            class="pl-2 w-full bg-transparent focus:outline-none"
+                            type="text"
+                            id="searchInput"
+                            placeholder="Filter table ..."
+                        />
+                    </div>
+                </div>
+
+                <table class="w-full bg-white rounded-lg shadow overflow-hidden attendance-table">
+                    <thead class="bg-gray-200 text-left text-gray-600 uppercase text-sm">
+                            <tr>
+                                <th class="py-3 px-4 cursor-pointer" onclick="sortTable(0)">
+                                    Name
+                                    <i class="sort-icon fas fa-sort ml-1"></i>
+                                </th>
+                                <th class="py-3 px-4 cursor-pointer" onclick="sortTable(1)">
+                                    Student ID
+                                    <i class="sort-icon fas fa-sort ml-1"></i>
+                                </th>
+                                <th class="py-3 px-4 cursor-pointer" onclick="sortTable(2)">
+                                    Lecturer
+                                    <i class="sort-icon fas fa-sort ml-1"></i>
+                                </th>
+                                <th class="py-3 px-4 cursor-pointer" onclick="sortTable(3)">
+                                    Time
+                                    <i class="sort-icon fas fa-sort ml-1"></i>
+                                </th>
+                                <th class="py-3 px-4 cursor-pointer" onclick="sortTable(4)">
+                                    Date
+                                    <i class="sort-icon fas fa-sort ml-1"></i>
+                                </th>
+                                <th class="py-3 px-4 cursor-pointer" onclick="sortTable(5)">
+                                    Attendance
+                                    <i class="sort-icon fas fa-sort ml-1"></i>
+                                </th>
+                            </tr>
+                    </thead>
+                    <tbody class="w-full">
+                        {% for row in attendance_data %}
+                        <tr class="hover:bg-gray-100">
+                            <td class="py-3 px-4 hover:underline">
+                                <a href="{{ url_for('student_info', student_name=row[0]) }}">{{ row[0] }}</a>
+                            </td>
+                            <td class="py-3 px-4">{{ row[1] }}</td>
+                            <td class="py-3 px-4">{{ row[2] }}</td>
+                            <td class="py-3 px-4">{{ row[3] }}</td>
+                            <td class="py-3 px-4">{{ row[4] }}</td>
+                            <td class="py-3 px-4">{{ row[5] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </main>
+        </div>
     </div>
 
-    <div class="main-content">
-        <header>
-            <h1 class="text-4xl font-semibold mb-8">Dashboard</h1>
-        </header>
-
-        <!-- Attendance table -->
-        <main>
-            <p>Hello, {{ session['session_name'] }}!</p>
-            <h1 class="text-3xl font-semibold mb-8 mt-12">Attendance Data</h1>
-            <input class="search-input" type="text" id="searchInput" placeholder="Search for names..">
-
-            <table class="attendance-table w-full">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Student ID</th>
-                        <th>Lecturer</th>
-                        <th>Time</th>
-                        <th>Date</th>
-                        <th>Attendance</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in attendance_data %}
-                    <tr>
-                        <td><a href="{{ url_for('student_info', student_name=row[0]) }}">{{ row[0] }}</a></td>
-                        <td>{{ row[1] }}</td>
-                        <td>{{ row[2] }}</td>
-                        <td>{{ row[3] }}</td>
-                        <td>{{ row[4] }}</td>
-                        <td>{{ row[5] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </main>
-    </div>
-
-    <!-- JavaScript for filtering the table -->
+    <!-- JavaScript for filtering and sorting the table -->
     <script>
         document.getElementById("searchInput").addEventListener("keyup", function () {
             const searchValue = this.value.toLowerCase();
@@ -181,6 +151,56 @@
                 row.style.display = shouldShowRow ? "table-row" : "none";
             });
         });
+
+        function sortTable(columnIndex) {
+        const table = document.querySelector(".attendance-table");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        const sortIcon = table.querySelectorAll(".sort-icon");
+
+        const sortOrder = sortIcon[columnIndex].dataset.order === "asc" ? "desc" : "asc";
+
+        rows.sort((a, b) => {
+            const aValue = a.cells[columnIndex].textContent.toLowerCase();
+            const bValue = b.cells[columnIndex].textContent.toLowerCase();
+            return sortOrder === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        });
+
+        tbody.innerHTML = ""; // Clear the current table body
+
+        rows.forEach(row => {
+            tbody.appendChild(row);
+        });
+
+        // Remove sort icons from all columns except the clicked one
+        sortIcon.forEach((icon, index) => {
+            if (index !== columnIndex) {
+                icon.classList.remove("fa-rotate-180");
+                icon.dataset.order = "";
+            }
+        });
+
+        sortIcon[columnIndex].dataset.order = sortOrder;
+        if (sortOrder === "desc") {
+            sortIcon[columnIndex].classList.add("fa-rotate-180");
+        }
+    }
+
+        // Array of month names to use in the date formatting
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+        // Get the current date and format it as "Day, DD Month YYYY"
+        const today = new Date();
+        const day = today.toLocaleDateString('en-US', { weekday: 'long' }); // Get the full day name
+        const date = today.getDate();
+        const month = months[today.getMonth()]; // Get the month name from the array
+        const year = today.getFullYear();
+
+        // Combine the components to create the formatted date string
+        const formattedDate = `${day}, ${date} ${month} ${year}`;
+
+        // Update the content of the 'todayDate' span element with the formatted date
+        document.getElementById("todayDate").innerText = formattedDate;
     </script>
 </body>
 

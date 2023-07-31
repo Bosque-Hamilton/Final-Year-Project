@@ -1,6 +1,172 @@
 /* Import Google font - Poppins */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
 
+/* Remove default margin and padding for all elements */
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+font,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+/* HTML5 display-role reset for older browsers */
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+  display: block;
+}
+
+/* Remove the default outline for focused elements */
+a:focus,
+button:focus,
+input:focus,
+textarea:focus {
+  outline: none;
+}
+
+/* Normalize box-sizing */
+* {
+  box-sizing: border-box;
+}
+
+/* Set line-height to 1 for better vertical alignment */
+html {
+  line-height: 1;
+}
+
+/* Remove list styles (bullets) */
+ul,
+ol {
+  list-style: none;
+}
+
+/* Remove default margins for the body element */
+body {
+  margin: 0;
+}
+
+/* Remove default styles for anchor links */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Make sure images do not have any extra spacing below */
+img {
+  vertical-align: middle;
+}
+
+/* Reset form elements */
+button,
+input,
+optgroup,
+select,
+textarea {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+/* Normalize button styles */
+button {
+  background: none;
+  cursor: pointer;
+}
+
+/* Remove default styling for address element */
+address {
+  font-style: normal;
+}
+
+/* Clear floats */
+.clearfix::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Add a minimal border-box reset for compatibility with older browsers */
+html {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+
 * {
   margin: 0;
   padding: 0;
@@ -17,6 +183,40 @@ body {
   background: rgb(130, 106, 251);
 }
 
+.password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            display: flex;
+            justify-content:center;
+            items-center: center;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+.password-container {
+            position: relative;
+        }
+
+.toggle-password {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    display: flex;
+    justify-content:center;
+    items-center: center;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
+
 .container {
   position: relative;
   max-width: 500px;
@@ -27,10 +227,33 @@ body {
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
 }
 
-.container header {
+.container h1 {
   font-size: 1.5rem;
   color: #333;
-  font-weight: 500;
+  font-weight: 600;
+  text-align: center;
+}
+
+.container h2 {
+  font-size: 1rem;
+  margin-top: 15px;
+  color: #333;
+  text-align: center;
+}
+
+.login--btn {
+    text-align:center;
+        color: rgb(130, 106, 251);
+
+        &:hover {
+            text-decoration: underline;
+        }
+}
+
+.container h2 {
+  font-size: 1rem;
+  color: #333;
+  margin-top: 12px;
   text-align: center;
 }
 
@@ -123,6 +346,8 @@ body {
   font-size: 1rem;
   font-weight: 400;
   margin-top: 30px;
+  margin-bottom: 15px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -134,11 +359,17 @@ body {
 }
 
 /* Responsive */
-@media screen and (max-width: 500px) {
-  .form .column {
-    flex-wrap: wrap;
+@media screen and (max-width: 768px) {
+  .container {
+    max-width: 90%;
   }
+
+  .form .column {
+    flex-direction: column;
+  }
+
   .form :where(.gender-option, .gender) {
     row-gap: 15px;
+    column-gap: 0;
   }
 }
