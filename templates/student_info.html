@@ -5,33 +5,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Information</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/21cb155038.js" crossorigin="anonymous"></script>
+
+    <style>
+        .circular_image {
+          width: 200px;
+          height: 200px;
+          border-radius: 50%;
+          overflow: hidden;
+          /*for demo*/
+          display:inline-block;
+          vertical-align:middle;
+        }
+        .circular_image img{
+          width:100%;
+          height: inherit;
+          object-fit: cover;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Student Information</h1>
-    {% if student_data %}
-        <div>
-            <h2>{{ student_data[1] }}</h2>
-            <p>Student ID: {{ student_data[0] }}</p>
-            <p>Course: {{ student_data[2] }}</p>
-            <p>Year: {{ student_data[3] }}</p>
-            <p>Total Attendance: {{ student_data[4] }}</p>
-            <p>Last Attendance: {{ student_data[5] }}</p>
-            <p>Email: {{ student_data[6] }}</p>
-            <p>Gender: {{ student_data[7] }}</p>
-            <p>Date of Birth: {{ student_data[8] }}</p>
-            <p>Total Lectures Missed: {{ student_data[9] }}</p>
-            <!-- Display other student details as needed -->
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="bg-indigo-600 w-72 flex flex-col justify-between h-screen p-2">
+            <div>
+                <h2 class="font-black p-2 tracking-wide text-2xl text-white">Face Recognition</h2>
+
+                <ul class="space-y-4 mt-14 text-lg font-poppins">
+                    <!-- Dashboard -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/dashboard" class="block">
+                            <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+                        </a>
+                    </li>
+                    <!-- Add a student -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/add_prsn" class="block">
+                            <i class="fas fa-user-plus mr-3"></i> Add a student
+                        </a>
+                    </li>
+                    <!-- Record Attendance -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/fr_page" class="block">
+                            <i class="fas fa-clipboard-list mr-3"></i> Record Attendance
+                        </a>
+                    </li>
+                    <!-- Edit Profile -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/edit_profile" class="block">
+                            <i class="fas fa-user-edit mr-3"></i> Edit Profile
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <form action="/logout" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"
+                    class="text-white text-lg font-semibold hover:bg-indigo-700 w-full rounded-lg py-2 px-3 text-left transition">
+                    <i class="fa-solid fa-arrow-right-from-bracket mr-3"></i>Logout
+                </button>
+            </form>
         </div>
-        {% if image_data_base64 %}
-            <!-- Display the student image -->
-            <img src="data:image/jpeg;base64, {{ image_data_base64 }}" alt="Student Image" width="200">
-        {% else %}
-            <p>No image available for this student.</p>
-        {% endif %}
-    {% else %}
-        <p>Student information not found.</p>
-    {% endif %}
+        <!--    Main Content-->
+        <div class="w-full flex h-screen items-center justify-center">
+            <div class="w-full max-w-md bg-white rounded-lg shadow-lg p-6">
+                <h1 class="text-3xl font-bold text-center mb-6">Student Information</h1>
+                {% if student_data %}
+                    {% if image_data_base64 %}
+                        <!-- Display the student image -->
+                        <div class="flex justify-center mb-6 ">
+                            <div class="circular_image">
+                                <img src="data:image/jpeg;base64, {{ image_data_base64 }}" alt="Student Image">
+                            </div>
+                        </div>
+                    {% else %}
+                        <p>No image available for this student.</p>
+                    {% endif %}
+                    <div class="">
+                        <h2 class="text-xl mb-4 font-bold">{{ student_data[1] }}</h2>
+                        <p class="mb-2">Student ID: {{ student_data[0] }}</p>
+                        <p class="mb-2">Course: {{ student_data[2] }}</p>
+                        <p class="mb-2">Year: {{ student_data[3] }}</p>
+                        <p class="mb-2">Total Attendance: {{ student_data[4] }}</p>
+                        <p class="mb-2">Last Attendance: {{ student_data[5] }}</p>
+                        <p class="mb-2">Email: {{ student_data[6] }}</p>
+                        <p class="mb-2">Gender: {{ student_data[7] }}</p>
+                        <p class="mb-2">Date of Birth: {{ student_data[8] }}</p>
+                        <p class="mb-2">Total Lectures Missed: {{ student_data[9] }}</p>
+                        <!-- Display other student details as needed -->
+                    </div>
+
+                {% else %}
+                    <p>Student information not found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

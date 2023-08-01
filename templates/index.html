@@ -2,170 +2,271 @@
 <html>
 <head>
     <title>User Information Form</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                background-color: #f0f0f0;
-                margin: 0;
-                padding: 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-            }
-            h1 {
-                text-align: center;
-                padding: 20px;
-                background-color: #333;
-                color: #fff;
-                margin: 0;
-            }
-            form {
-                max-width: 400px;
-                width: 100%;
-                margin: 20px;
-                padding: 20px;
-                background-color: #fff;
-                border-radius: 5px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            }
-            label {
-                display: block;
-                font-weight: bold;
-                margin-bottom: 5px;
-            }
-            input[type="text"],
-            input[type="number"],
-            input[type="email"],
-            input[type="date"] {
-                width: 100%;
-                padding: 10px;
-                margin-bottom: 15px;
-                border: 1px solid #ccc;
-                border-radius: 5px;
-                box-sizing: border-box;
-            }
-            .gender-box {
-                margin-top: 20px;
-            }
-            .gender-box h3 {
-                font-weight: bold;
-                margin-bottom: 10px;
-            }
-            .gender-option {
-                display: flex;
-                align-items: center;
-                column-gap: 20px;
-            }
-            button {
-                width: 100%;
-                padding: 10px 20px;
-                background-color: #333;
-                color: #fff;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                transition: background 0.3s ease;
-            }
-            button:disabled {
-                background-color: #ccc;
-                cursor: not-allowed;
-            }
-            a {
-                display: block;
-                text-align: center;
-                margin-top: 15px;
-                color: #333;
-                text-decoration: none;
-            }
-            canvas {
-                display: none;
-                width: 100%;
-                max-width: 640px;
-                height: auto;
-            }
-        </style>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/21cb155038.js" crossorigin="anonymous"></script>
 </head>
-<body>
-    <h1>Welcome to the Home Page!</h1>
-    <p>Hello, {{ session['session_name'] }}!</p>
-    <h1>Enter User Information and Capture Images</h1>
-    <form id="userForm" method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label>Name:</label>
-        <input type="text" name="name" required><br>
+<body class="font-poppins">
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="bg-indigo-600 w-72 flex flex-col justify-between h-screen p-2">
+            <div>
+                <h2 class="font-black p-2 tracking-wide text-2xl text-white">Face Recognition</h2>
 
-        <label>Course:</label>
-        <input type="text" name="course"><br>
-
-        <label>Email Address</label>
-        <input type="email" name="email" placeholder="Enter email address" required />
-
-        <div class="gender-box">
-            <h3>Gender</h3>
-            <div class="gender-option">
-                <div class="gender">
-                    <input type="radio" id="check-male" name="gender" value="Male" checked />
-                    <label for="check-male">Male</label>
-                </div>
-                <div class="gender">
-                    <input type="radio" id="check-female" name="gender" value="Female" />
-                    <label for="check-female">Female</label>
-                </div>
-                <div class="gender">
-                    <input type="radio" id="check-other" name="gender" value="Prefer not to say" />
-                    <label for="check-other">Other</label>
-                </div>
+                <ul class="space-y-4 mt-14 text-lg font-poppins">
+                    <!-- Dashboard -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/dashboard" class="block">
+                            <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+                        </a>
+                    </li>
+                    <!-- Add a student -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/add_prsn" class="block">
+                            <i class="fas fa-user-plus mr-3"></i> Add a student
+                        </a>
+                    </li>
+                    <!-- Record Attendance -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/fr_page" class="block">
+                            <i class="fas fa-clipboard-list mr-3"></i> Record Attendance
+                        </a>
+                    </li>
+                    <!-- Edit Profile -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/edit_profile" class="block">
+                            <i class="fas fa-user-edit mr-3"></i> Edit Profile
+                        </a>
+                    </li>
+                </ul>
             </div>
+            <form action="/logout" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"
+                    class="text-white text-lg font-semibold hover:bg-indigo-700 w-full rounded-lg py-2 px-3 text-left transition">
+                    <i class="fa-solid fa-arrow-right-from-bracket mr-3"></i>Logout
+                </button>
+            </form>
         </div>
 
-        <label>Date of birth</label>
-        <input type="date" id="date_of_birth" name="date_of_birth" placeholder="Enter date of birth" required />
+        <!-- Main Content -->
+        <div class="w-full flex h-screen items-center justify-center">
+            <form id="userForm" method="POST" class="rounded pt-6 pb-8 mb-4" enctype="multipart/form-data" >
+                <h1 class="text-3xl font-bold text-center mb-6">Add a Student</h1>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <label>Year:</label>
-        <input type="number" min="1" max="4" name="year" required>
+                <!-- Step 1: Collect Information -->
+                <div id="step1" style="width:350px;">
+                    <div class="mb-4">
+                    <label class="block text-gray-900 text-sm font-bold mb-2" for="name">
+                        Name:
+                    </label>
+                    <input class="shadow border-gray-400 appearance-none border-2 rounded w-full py-2 px-3 text-black leading-tight focus:outline-none focus:border-gray-600"
+                        id="name" name="name" type="text" placeholder="Name"  required>
+                </div>
 
-        <label>Student ID:</label>
-        <input type="text" name="student_id" required>
+                <div class="mb-4">
+                    <label class="block text-gray-900 text-sm font-bold mb-2" for="course">
+                        Course:
+                    </label>
+                    <input class="shadow border-gray-400 appearance-none border-2 rounded w-full py-2 px-3 text-black leading-tight focus:outline-none focus:border-gray-600"
+                        id="course" name="course" placeholder="Course"  type="text" required>
+                </div>
 
-        <button type="button" id="captureButton" onclick="captureImage()">Capture Image</button>
-        <button type="submit">Submit</button>
-    </form>
+                <div class="mb-4">
+                    <label class="block text-gray-900 text-sm font-bold mb-2" for="email">
+                        Email Address:
+                    </label>
+                    <input class="shadow border-gray-400 appearance-none border-2 rounded w-full py-2 px-3 text-black leading-tight focus:outline-none focus:border-gray-600"
+                        id="email" name="email" type="email" placeholder="Enter email address" required>
+                </div>
 
-    <a href="/fr_page">Go to Face Recognition</a>
-    <a href="/attendance">View Attendance</a>
-    <a href="/dashboard">Dashboard</a>
-    <form action="/logout" method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit">Logout</button>
-    </form>
+                <div class="mb-4">
+                    <h3 class="block text-gray-900 text-sm font-bold mb-2">Gender:</h3>
+                    <div class="gender-option flex gap-3">
+                        <!-- First Gender Option: Male -->
+                        <div class="flex items-center">
+                            <input type="radio" id="check-male" name="gender" value="Male" checked class="mr-2">
+                            <label for="check-male">Male</label>
+                        </div>
 
-    <canvas id="canvas" width="640" height="480"></canvas>
+                        <!-- Second Gender Option: Female -->
+                        <div class="flex items-center">
+                            <input type="radio" id="check-female" name="gender" value="Female" class="mr-2">
+                            <label for="check-female">Female</label>
+                        </div>
 
+                        <!-- Third Gender Option: Prefer not to say -->
+                        <div class="flex items-center">
+                            <input type="radio" id="check-other" name="gender" value="Prefer not to say" class="mr-2">
+                            <label for="check-other">Other</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-900 text-sm font-bold mb-2" for="date_of_birth">Date of birth:</label>
+                    <input type="date" class="shadow border-gray-400 appearance-none border-2 rounded w-full py-2 px-3  text-black leading-tight" id="date_of_birth" name="date_of_birth" placeholder="Enter date of birth" required />
+                </div>
+                <div class="flex w-full justify-between">
+                    <div class="mb-4 basis-1/2">
+                        <label class="block text-gray-900 text-sm font-bold mb-2" for="year">
+                            Year:
+                        </label>
+                        <input class="shadow border-gray-400 appearance-none border-2 rounded w-24 py-2 px-3 text-black leading-tight focus:outline-none focus:border-gray-600"
+                            id="year" name="year" type="number" min="1" max="4" required>
+                    </div>
+
+                    <div class="mb-4 basis-1/2">
+                        <label class="block text-gray-900 text-sm font-bold mb-2" for="student_id">
+                            Student ID:
+                        </label>
+                        <input class="shadow border-gray-400 appearance-none border-2 rounded w-56 py-2 px-3  text-black leading-tight focus:outline-none focus:border-gray-600"
+                            id="student_id" name="student_id" min="6" max="10" type="text" required>
+                    </div>
+                </div>
+
+                    <!-- Add other fields as needed for Step 1 -->
+
+                    <div class="flex items-center justify-between">
+                        <button type="button" onclick="nextStep(1, 2)"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 w-full rounded focus:outline-none focus:shadow-outline">
+                            Next
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Capture Image -->
+                 <div id="step2" style="display: none;">
+                    <div class="flex justify-center mb-4">
+                        <video id="video" width="640" height="480" autoplay></video>
+                        <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+                    </div>
+
+                    <div id="form-btn" class="flex items-center justify-between">
+                        <button type="button" onclick="backToStep(2, 1)"
+                            class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            Back
+                        </button>
+                        <button type="button"  onclick="captureImage()"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            Capture Image
+                        </button>
+                        <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            Submit
+                        </button>
+                        <!-- The Submit button is dynamically added after capturing the image -->
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
     <script>
-        let canvas = document.getElementById("canvas");
-        let context = canvas.getContext("2d");
-        let captureCount = 0;
-        let imageCaptured = false; // Flag to track whether the image has been captured
+        function nextStep(currentStep, nextStep) {
+            const currentStepDiv = document.getElementById("step" + currentStep);
+            const nextStepDiv = document.getElementById("step" + nextStep);
 
-        async function captureImage() {
-            if (!imageCaptured) { // Check if the image has not been captured
-                try {
-                    const imageData = await fetch('/capture_image?image_name=' + document.getElementById("name").value).then(response => response.text());
-                    const image = new Image();
-                    image.src = 'data:image/jpeg;base64,' + imageData;
-                    image.onload = function () {
-                        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-                        canvas.style.display = "block";
-                        captureCount++;
-                        document.getElementById("captureButton").disabled = true;
-                        imageCaptured = true; // Set the flag to true after capturing the image
-                    };
-                } catch (error) {
-                    console.error("Error capturing the image: ", error);
-                }
+            if (currentStepDiv && nextStepDiv) {
+                currentStepDiv.style.display = "none";
+                nextStepDiv.style.display = "block";
             }
         }
-    </script>
+
+        function backToStep(currentStep, prevStep) {
+            const currentStepDiv = document.getElementById("step" + currentStep);
+            const prevStepDiv = document.getElementById("step" + prevStep);
+
+            if (currentStepDiv && prevStepDiv) {
+                currentStepDiv.style.display = "none";
+                prevStepDiv.style.display = "block";
+            }
+        }
+
+        const formData = new FormData();
+
+        async function captureImage() {
+        try {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+
+            // Access the webcam stream
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+            // Attach the stream to the video element
+            video.srcObject = stream;
+
+            // Wait for the video to load the stream properly
+            await new Promise(resolve => {
+                video.onloadedmetadata = () => {
+                    resolve();
+                };
+            });
+
+            // Play the video
+            video.play();
+
+            // Show the canvas and hide the video element
+            canvas.style.display = 'block';
+            video.style.display = 'none';
+
+            // Show the "Submit" button after capturing the image
+            //const formBtnDiv = document.getElementById('form-btn');
+            //const submitButton = document.createElement('button');
+            //submitButton.type = 'submit';
+            //submitButton.classList.add('bg-blue-500', 'hover:bg-blue-700', 'text-white', 'font-bold', 'py-2', 'px-4', 'rounded', 'focus:outline-none', 'focus:shadow-outline');
+            //submitButton.innerText = 'button';
+            //submitButton.onclick = submitForm;
+            //formBtnDiv.appendChild(submitButton);
+
+            // Capture the image from the video stream
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Stop the video stream to release the webcam
+            stream.getTracks().forEach(track => track.stop());
+        } catch (error) {
+            console.error('Error capturing the image: ', error);
+        }
+    }
+
+    async function submitForm() {
+        try {
+            // Capture the image from the canvas
+            const canvas = document.getElementById('canvas');
+            const imageDataURL = canvas.toDataURL('image/jpeg');
+
+            // Add the image data to the form data
+            const formData = new FormData(document.getElementById('userForm'));
+            formData.append('image_data', imageDataURL); // Add the image_data key to the form data
+
+            // Create a hidden input field for CSRF token and add it to the form data
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            formData.append('csrf_token', csrfToken);
+
+            // Create a new form element to submit the form
+            const formElement = document.createElement('form');
+            formElement.method = 'post';
+            formElement.action = '/add_prsn';
+            formElement.style.display = 'none';
+
+            // Append the form data to the new form element
+            for (const [key, value] of formData.entries()) {
+                const inputElement = document.createElement('input');
+                inputElement.type = 'hidden';
+                inputElement.name = key;
+                inputElement.value = value;
+                formElement.appendChild(inputElement);
+            }
+
+            // Append the new form element to the document and submit it
+            document.body.appendChild(formElement);
+            formElement.submit();
+        } catch (error) {
+            console.error('Error submitting the form: ', error);
+        }
+    }
+</script>
 </body>
 </html>

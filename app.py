@@ -1,10 +1,11 @@
-from flask import Flask, render_template, Response, request, redirect, url_for, session
+from flask import Flask, render_template, Response, request, redirect, url_for, session, flash
 import cv2
 import face_recognition
 import numpy as np
 import mysql.connector
 from PIL import Image
 import os
+from base64 import b64encode
 import io
 import cvzone
 import pickle
@@ -92,6 +93,40 @@ file.close()
 print("File Saved")
 
 
+
+# def capture_image():
+#     try:
+#         video_capture = cv2.VideoCapture(0)
+#         ret, frame = video_capture.read()
+#
+#         # Release the video capture device
+#         video_capture.release()
+#
+#         # Convert the captured image to JPEG format in binary
+#         image_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+#         image_buffer = BytesIO()
+#         image_pil.save(image_buffer, format='JPEG')
+#         image_binary = image_buffer.getvalue()
+#
+#         # Encode the binary image data to Base64 format
+#         image_base64 = b64encode(image_binary).decode('utf-8')
+#
+#         return image_base64
+#     except Exception as e:
+#         print("Error capturing image:", e)
+#         return None
+
+def capture_image():
+    # Function to capture an image from the webcam
+    camera = cv2.VideoCapture(0)
+
+    _, image = camera.read()
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    camera.release()
+
+    return image
+
 @app.route('/add_prsn', methods=['GET', 'POST'])
 def index():
     if 'user_id' in session:
@@ -151,16 +186,16 @@ def index():
         # User is not logged in, redirect to login page
         return redirect(url_for('login'))
 
-def capture_image():
-    # Function to capture an image from the webcam
-    camera = cv2.VideoCapture(0)
-
-    _, image = camera.read()
-    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-    camera.release()
-
-    return image
+# def capture_image():
+#     # Function to capture an image from the webcam
+#     camera = cv2.VideoCapture(0)
+#
+#     _, image = camera.read()
+#     # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+#
+#     camera.release()
+#
+#     return image
 
 file_path = 'EncodeFile.p'  # Replace with the actual file path
 
@@ -455,6 +490,9 @@ def gen_frames(session_name):
 
 # ... your existing Flask app setup and other routes ...
 
+current_time = datetime.datetime.now().time()
+current_date = datetime.date.today()
+
 @app.route('/attendance_data')
 def get_attendance_data():
     try:
@@ -466,10 +504,12 @@ def get_attendance_data():
         )
         cursor = connection.cursor()
 
-        # Define the SQL query to select attendance data from the database
-        select_query = "SELECT name, student_id, time, date, attendance FROM attendance"
 
-        cursor.execute(select_query)
+
+        # Define the SQL query to select attendance data from the database
+        select_query = "SELECT name, student_id, time, date, attendance FROM attendance WHERE time >= %s AND date = %s"
+
+        cursor.execute(select_query, (current_time, current_date,))
         attendance_data = cursor.fetchall()
 
         # Close cursor and connection after fetching data
@@ -679,6 +719,73 @@ def student_info(student_name):
 
     else:
         redirect('/')
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    if 'user_id' in session:
+        try:
+            # Connect to the MySQL database
+            connection = mysql.connector.connect(
+                host=mysql_host,
+                user=mysql_user,
+                password=mysql_password,
+                database=mysql_database
+            )
+            cursor = connection.cursor()
+
+            if request.method == 'POST':
+                # Retrieve the user_id from the session
+                user_id = session['user_id']
+
+                # Get the form data submitted by the user
+                name = request.form['name']
+                email = request.form['email']
+                course = request.form['course']
+                password = request.form['password']
+
+                update_query = "UPDATE lecturer SET name = %s, email = %s, course = %s, password = %s WHERE id = %s"
+                cursor.execute(update_query, (name, email, course, password, user_id))
+
+                # Update the session data with the new name and email (if changed)
+                session['session_name'] = name
+                session['email'] = email
+
+                print("Received Form Data:", request.form)
+                # Commit the changes to the database
+                connection.commit()
+
+                flash('Profile updated successfully', 'success')
+                return redirect('/dashboard')  # Redirect to the same edit_profile page after saving changes
+
+            else:
+                # If the request is a GET request, fetch the current user's data
+                user_id = session['user_id']
+                select_query = "SELECT name, email, course FROM lecturer WHERE id = %s"
+                cursor.execute(select_query, (user_id,))
+                user_data = cursor.fetchone()
+
+                # Convert the user_data tuple to a dictionary for easier access in the template
+                user_data_dict = {
+                    'name': user_data[0],
+                    'email': user_data[1],
+                    'course': user_data[2],
+                }
+                # Add other fields as needed
+
+                return render_template('edit_profile.html', user_data=user_data_dict)
+
+        except mysql.connector.Error as err:
+            flash('An error occurred while updating the profile', 'error')
+            return redirect('/dashoard')  # Redirect to the dashboard or another page on error
+
+        finally:
+            # Close cursor and connection after the operation
+            cursor.close()
+            connection.close()
+    else:
+        return redirect('/')
+
+
 
 
 if __name__ == "__main__":

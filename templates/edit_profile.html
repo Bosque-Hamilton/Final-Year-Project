@@ -1,0 +1,138 @@
+<!-- edit_profile.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/21cb155038.js" crossorigin="anonymous"></script>
+    <!-- Add the Bootstrap CSS link here -->
+    <!--    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <style>
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            display: flex;
+            justify-content:center;
+            items-center: center;
+            right: 20px;
+            top: 67%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+    </style>
+
+</head>
+<body class="font-poppins">
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="bg-indigo-600 w-72 flex flex-col justify-between h-screen p-2">
+            <div>
+                <h2 class="font-black p-2 tracking-wide text-2xl text-white">Face Recognition</h2>
+
+                <ul class="space-y-4 mt-14 text-lg font-poppins">
+                    <!-- Dashboard -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/dashboard" class="block">
+                            <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+                        </a>
+                    </li>
+                    <!-- Add a student -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/add_prsn" class="block">
+                            <i class="fas fa-user-plus mr-3"></i> Add a student
+                        </a>
+                    </li>
+                    <!-- Record Attendance -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/fr_page" class="block">
+                            <i class="fas fa-clipboard-list mr-3"></i> Record Attendance
+                        </a>
+                    </li>
+                    <!-- Edit Profile -->
+                    <li class="text-white font-semibold rounded-lg p-3 hover:bg-indigo-700 transition">
+                        <a href="/edit_profile" class="block">
+                            <i class="fas fa-user-edit mr-3"></i> Edit Profile
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <form action="/logout" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"
+                    class="text-white text-lg font-semibold hover:bg-indigo-700 w-full rounded-lg py-2 px-3 text-left transition">
+                    <i class="fa-solid fa-arrow-right-from-bracket mr-3"></i>Logout
+                </button>
+            </form>
+        </div>
+
+        <!-- Main Content -->
+        <div class="w-full flex h-screen items-center justify-center">
+            <form method="POST" id="edit-profile-form" action="/edit_profile" style="width:350px;">
+                <h1 class="text-3xl font-bold text-center mb-6">Edit Profile</h1>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-4">
+                    <label class="block text-gray-900 text-sm font-bold mb-2" for="name">Name:</label>
+                    <input type="text" id="name" name="name" class="shadow border-gray-400 appearance-none border-2 rounded w-full py-2 px-3 text-black leading-tight focus:outline-none focus:border-gray-600" value="{{ user_data['name'] }}" required>
+                    <br>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-900 text-sm font-bold mb-2" for="email">Email:</label>
+                    <input type="email"  class="shadow border-gray-400 appearance-none border-2 rounded w-full py-2 px-3 text-black leading-tight focus:outline-none focus:border-gray-600" id="email" name="email" value="{{ user_data['email'] }}" required>
+                    <br>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-900 text-sm font-bold mb-2" for="course">Course:</label>
+                    <input type="text" id="course" class="shadow border-gray-400 appearance-none border-2 rounded w-full py-2 px-3 text-black leading-tight focus:outline-none focus:border-gray-600" name="course" value="{{ user_data['course'] }}" required>
+                    <br>
+                </div>
+                <div class="mb-4 password-container">
+                    <label for="password" class="block text-gray-900 text-sm font-bold mb-2">Password</label>
+                    <input type="password" id="password" name="password" class="shadow border-gray-400 appearance-none border-2 rounded w-full py-2 px-3 text-black leading-tight focus:outline-none focus:border-gray-600" required>
+                    <span class="toggle-password" onclick="togglePasswordVisibility()">
+                        <i class="far fa-eye" id="eye-icon"></i>
+                    </span>
+                </div>
+                <!-- Add other fields as needed -->
+                <button onclick="myFunction()" class="flex items-center w-full cursor-pointer  justify-center">
+                    <input name="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 w-full px-4 rounded cursor-pointer" type="submit"  value="Save Changes">
+                </button>
+
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+
+        function myFunction() {
+            alert("Profile Edited Successfully");
+        }
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('far', 'fa-eye');
+                eyeIcon.classList.add('fas', 'fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fas', 'fa-eye-slash');
+                eyeIcon.classList.add('far', 'fa-eye');
+            }
+        }
+    </script>
+</body>
+</html>
