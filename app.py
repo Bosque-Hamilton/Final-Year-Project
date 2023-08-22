@@ -12,6 +12,7 @@ import pickle
 from flask_wtf import CSRFProtect
 import secrets
 import datetime
+import schedule
 import base64
 import json
 import time
@@ -78,6 +79,13 @@ def read_images_from_sql():
 
     return imgList, image_names
 
+# # Schedule the function to run every 1 minute
+# schedule.every(1).minutes.do(read_images_from_sql)
+#
+# while True:
+#     schedule.run_pending()
+#     time.sleep(1)
+
 print("Reading images from SQL and saving to the 'images' folder...")
 imgList, image_names = read_images_from_sql()
 
@@ -91,30 +99,6 @@ file = open("EncodeFile.p", 'wb')
 pickle.dump(encodeListKnownWithNames, file)
 file.close()
 print("File Saved")
-
-
-
-# def capture_image():
-#     try:
-#         video_capture = cv2.VideoCapture(0)
-#         ret, frame = video_capture.read()
-#
-#         # Release the video capture device
-#         video_capture.release()
-#
-#         # Convert the captured image to JPEG format in binary
-#         image_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-#         image_buffer = BytesIO()
-#         image_pil.save(image_buffer, format='JPEG')
-#         image_binary = image_buffer.getvalue()
-#
-#         # Encode the binary image data to Base64 format
-#         image_base64 = b64encode(image_binary).decode('utf-8')
-#
-#         return image_base64
-#     except Exception as e:
-#         print("Error capturing image:", e)
-#         return None
 
 def capture_image():
     # Function to capture an image from the webcam
@@ -140,43 +124,74 @@ def index():
             gender = request.form['gender']
             date_of_birth = request.form['date_of_birth']
 
-            # Capture an image from the webcam
-            image = capture_image()
-
-            # Store user information in the database
+            # # Capture an image from the webcam
+            # image = capture_image()
             try:
-                connection = mysql.connector.connect(
-                    host=mysql_host,
-                    user=mysql_user,
-                    password=mysql_password,
-                    database=mysql_database
-                )
+                # Check if an image was uploaded
+                if 'imageInput' in request.files:
+                    uploaded_image = request.files['imageInput']
 
-                cursor = connection.cursor()
+                    # Check if the uploaded file has a valid image extension
+                    if uploaded_image.filename and uploaded_image.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                        image = Image.open(uploaded_image)
 
-                # Define the SQL query to insert user information
-                insert_query = "INSERT INTO student (name, student_id, email, gender, date_of_birth, course, year) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-                cursor.execute(insert_query, (name, student_id,email, gender, date_of_birth, course, year))
+                        # Store user information in the database
+                        try:
+                            connection = mysql.connector.connect(
+                                host=mysql_host,
+                                user=mysql_user,
+                                password=mysql_password,
+                                database=mysql_database
+                            )
 
-                image_buffer = BytesIO()
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                image_pil = Image.fromarray(image)
-                image_pil.save(image_buffer, format='JPEG')
-                image_binary = image_buffer.getvalue()
+                            cursor = connection.cursor()
 
-                # Define the SQL query to insert the image into the Images table
-                insert_image_query = "INSERT INTO images (image_name, image_data) VALUES (%s, %s)"
+                            # Define the SQL query to insert user information
+                            insert_query = "INSERT INTO student (name, student_id, email, gender, date_of_birth, course, year) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                            cursor.execute(insert_query, (name, student_id,email, gender, date_of_birth, course, year))
 
-                # Insert the image into the Images table
-                cursor.execute(insert_image_query, (name, image_binary))
+                            # image_buffer = BytesIO()
+                            # image.save(image_buffer, format='JPEG')
+                            # image_binary = image_buffer.getvalue()
 
-                # Commit changes to the database
-                connection.commit()
+                            # Resize the image to a desired size
+                            desired_width = 640  # Adjust the desired width
+                            aspect_ratio = float(image.height) / float(image.width)
+                            desired_height = int(desired_width * aspect_ratio)
+                            image = image.resize((desired_width, desired_height), Image.ANTIALIAS)
 
-                cursor.close()
-                connection.close()
+                            # Compress the image
+                            compression_quality = 85  # Adjust the compression quality (0-100)
+                            output_buffer = io.BytesIO()
+                            image.save(output_buffer, format='JPEG', quality=compression_quality)
 
-                return redirect('/add_prsn')
+                            # Get the binary data of the compressed image
+                            image_binary = output_buffer.getvalue()
+
+                            # Define the SQL query to insert the image into the Images table
+                            insert_image_query = "INSERT INTO images (image_name, image_data) VALUES (%s, %s)"
+
+                            # Insert the image into the Images table
+                            cursor.execute(insert_image_query, (name, image_binary))
+
+                            # Commit changes to the database
+                            connection.commit()
+
+                            cursor.close()
+                            connection.close()
+
+                            print("Image and data inserted successfully.")
+
+                            return redirect('/add_prsn')
+
+                        except mysql.connector.Error as err:
+                            return f"Error: {err}"
+
+                    else:
+                        print("Invalid image format or no image uploaded.")
+
+                else:
+                    print("No image uploaded.")
 
             except mysql.connector.Error as err:
                 return f"Error: {err}"
@@ -185,17 +200,6 @@ def index():
     else:
         # User is not logged in, redirect to login page
         return redirect(url_for('login'))
-
-# def capture_image():
-#     # Function to capture an image from the webcam
-#     camera = cv2.VideoCapture(0)
-#
-#     _, image = camera.read()
-#     # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#
-#     camera.release()
-#
-#     return image
 
 file_path = 'EncodeFile.p'  # Replace with the actual file path
 
@@ -276,7 +280,6 @@ def update_attendance_for_all_students():
 # Call the function to update attendance for all students
 update_attendance_for_all_students()
 
-
 def update_last_attendance(name):
     try:
         connection = mysql.connector.connect(
@@ -312,9 +315,7 @@ def update_last_attendance(name):
     except mysql.connector.Error as err:
         print(f"Error updating last_attendance: {err}")
 
-
 def gen_frames(session_name):
-
     try:
         connection = mysql.connector.connect(
             host=mysql_host,
@@ -504,8 +505,6 @@ def get_attendance_data():
         )
         cursor = connection.cursor()
 
-
-
         # Define the SQL query to select attendance data from the database
         select_query = "SELECT name, student_id, time, date, attendance FROM attendance WHERE time >= %s AND date = %s"
 
@@ -529,9 +528,6 @@ def get_attendance_data():
     except mysql.connector.Error as err:
         print(f"Error: {err}")
         return {'error': 'An error occurred while fetching attendance data.'}, 500
-
-
-
     
 @app.route('/fr_page')
 def fr_page():
@@ -746,6 +742,13 @@ def edit_profile():
                 update_query = "UPDATE lecturer SET name = %s, email = %s, course = %s, password = %s WHERE id = %s"
                 cursor.execute(update_query, (name, email, course, password, user_id))
 
+                # Include the password field in the update query only if it's not empty
+                if password:
+                    update_query += ", password = %s"
+                    cursor.execute(update_query, (name, email, course, password, user_id))
+                else:
+                    cursor.execute(update_query, (name, email, course, user_id))
+
                 # Update the session data with the new name and email (if changed)
                 session['session_name'] = name
                 session['email'] = email
@@ -776,7 +779,7 @@ def edit_profile():
 
         except mysql.connector.Error as err:
             flash('An error occurred while updating the profile', 'error')
-            return redirect('/dashoard')  # Redirect to the dashboard or another page on error
+            return redirect('/dashboard')  # Redirect to the dashboard or another page on error
 
         finally:
             # Close cursor and connection after the operation
@@ -784,9 +787,6 @@ def edit_profile():
             connection.close()
     else:
         return redirect('/')
-
-
-
 
 if __name__ == "__main__":
     

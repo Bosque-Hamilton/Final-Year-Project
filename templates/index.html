@@ -140,18 +140,21 @@
                 <!-- Step 2: Capture Image -->
                  <div id="step2" style="display: none;">
                     <div class="flex justify-center mb-4">
-                        <video id="video" width="640" height="480" autoplay></video>
-                        <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+                        <div>
+                            <h3>Uploaded Image:</h3>
+                            <img id="uploadedImage" width="640" height="480" >
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center mb-4">
+                        <!-- Replace video and canvas with file input for image upload -->
+                        <input type="file" name="imageInput" id="imageInput" onchange="displayUploadedImage()" accept=".jpg, .jpeg, .png">
                     </div>
 
                     <div id="form-btn" class="flex items-center justify-between">
                         <button type="button" onclick="backToStep(2, 1)"
                             class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                             Back
-                        </button>
-                        <button type="button"  onclick="captureImage()"
-                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                            Capture Image
                         </button>
                         <button type="submit"
                             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
@@ -186,50 +189,19 @@
 
         const formData = new FormData();
 
-        async function captureImage() {
-        try {
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-            const context = canvas.getContext('2d');
+        async function displayUploadedImage() {
+            try {
+                const imageInput = document.getElementById('imageInput');
+                const uploadedImage = document.getElementById('uploadedImage');
 
-            // Access the webcam stream
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-
-            // Attach the stream to the video element
-            video.srcObject = stream;
-
-            // Wait for the video to load the stream properly
-            await new Promise(resolve => {
-                video.onloadedmetadata = () => {
-                    resolve();
-                };
-            });
-
-            // Play the video
-            video.play();
-
-            // Show the canvas and hide the video element
-            canvas.style.display = 'block';
-            video.style.display = 'none';
-
-            // Show the "Submit" button after capturing the image
-            //const formBtnDiv = document.getElementById('form-btn');
-            //const submitButton = document.createElement('button');
-            //submitButton.type = 'submit';
-            //submitButton.classList.add('bg-blue-500', 'hover:bg-blue-700', 'text-white', 'font-bold', 'py-2', 'px-4', 'rounded', 'focus:outline-none', 'focus:shadow-outline');
-            //submitButton.innerText = 'button';
-            //submitButton.onclick = submitForm;
-            //formBtnDiv.appendChild(submitButton);
-
-            // Capture the image from the video stream
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Stop the video stream to release the webcam
-            stream.getTracks().forEach(track => track.stop());
-        } catch (error) {
-            console.error('Error capturing the image: ', error);
+                if (imageInput.files && imageInput.files[0]) {
+                    uploadedImage.src = URL.createObjectURL(imageInput.files[0]);
+                    uploadedImage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error displaying uploaded image: ', error);
+            }
         }
-    }
 
     async function submitForm() {
         try {
