@@ -315,7 +315,7 @@ def update_last_attendance(name):
     except mysql.connector.Error as err:
         print(f"Error updating last_attendance: {err}")
 
-def gen_frames(session_name):
+def gen_frames(session_name,  lecturer_id):
     try:
         connection = mysql.connector.connect(
             host=mysql_host,
@@ -387,11 +387,11 @@ def gen_frames(session_name):
                                 current_date = datetime.date.today()
 
                                 # Define the SQL query to insert attendance record
-                                insert_query = "INSERT INTO attendance (name, attendance, student_id, course, student_year, lecturer, time, date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                                insert_query = "INSERT INTO attendance (name, attendance, student_id, lecturer_id, course, student_year, lecturer, time, date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
 
                                 if student_id is not None:
                                     cursor.execute(insert_query, (
-                                    name, "present", student_id, course, year, session_name, str(current_time),
+                                    name, "present", student_id, lecturer_id, course, year, session_name, str(current_time),
                                     str(current_date)))
                                     connection.commit()
                                     print("Attendance recorded.")
@@ -443,9 +443,9 @@ def gen_frames(session_name):
 
                             if attendance_count == 0:
                                 # If no attendance record exists within the last 2 hours, insert a new record with "absent" attendance
-                                insert_query = "INSERT INTO attendance (name, student_id, course, student_year, lecturer, time, date, attendance) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                                insert_query = "INSERT INTO attendance (name, student_id, lecturer_id, course, student_year, lecturer, time, date, attendance) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
                                 cursor.execute(insert_query, (
-                                    name, student_id, course, year, session_name, str(current_time),
+                                    name, student_id, lecturer_id, course, year, session_name, str(current_time),
                                     str(current_date), "absent"))
                                 connection.commit()
                                 print("Attendance recorded as absent for:", name)
@@ -536,10 +536,44 @@ def fr_page():
     else:
         return redirect('/')
 
+def get_lecturer_id_from_user_id(user_id):
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_host,
+            user=mysql_user,
+            password=mysql_password,
+            database=mysql_database
+        )
+        cursor = connection.cursor()
+
+        select_query = "SELECT id FROM lecturer WHERE id = %s"
+        cursor.execute(select_query, (user_id,))
+        result = cursor.fetchone()
+
+        if result:
+            lecturer_id = result[0]
+            return lecturer_id
+        else:
+            return None
+
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return None
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
 @app.route('/video_feed')
 def video_feed():
+    user_id = session.get('user_id')
     session_name = session.get('session_name', 'Unknown')
-    return Response(gen_frames(session_name), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+    # Retrieve lecturer_id based on user_id (you need to implement this)
+    lecturer_id = get_lecturer_id_from_user_id(user_id)
+
+    return Response(gen_frames(session_name, lecturer_id), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -716,6 +750,29 @@ def student_info(student_name):
     else:
         redirect('/')
 
+def update_attendance_lecturer(user_id, session_name):
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_host,
+            user=mysql_user,
+            password=mysql_password,
+            database=mysql_database
+        )
+        cursor = connection.cursor()
+
+        # Update lecturer name in attendance table where lecture_id = user_id
+        update_attendance_query = "UPDATE attendance SET lecturer = %s WHERE lecturer_id = %s"
+        cursor.execute(update_attendance_query, (session_name, user_id))
+
+        connection.commit()
+        print("Attendance table updated with session name for lecturer:", user_id)
+
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+    finally:
+        cursor.close()
+        connection.close()
+
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
     if 'user_id' in session:
@@ -739,26 +796,30 @@ def edit_profile():
                 course = request.form['course']
                 password = request.form['password']
 
+                # If the password field is empty, fetch the existing password
+                if not password:
+                    select_query = "SELECT password FROM lecturer WHERE id = %s"
+                    cursor.execute(select_query, (user_id,))
+                    existing_password = cursor.fetchone()[0]
+                    password = existing_password
+
                 update_query = "UPDATE lecturer SET name = %s, email = %s, course = %s, password = %s WHERE id = %s"
                 cursor.execute(update_query, (name, email, course, password, user_id))
 
-                # Include the password field in the update query only if it's not empty
-                if password:
-                    update_query += ", password = %s"
-                    cursor.execute(update_query, (name, email, course, password, user_id))
-                else:
-                    cursor.execute(update_query, (name, email, course, user_id))
+
 
                 # Update the session data with the new name and email (if changed)
                 session['session_name'] = name
                 session['email'] = email
 
-                print("Received Form Data:", request.form)
+                # Update lecturer name in attendance table
+                update_attendance_lecturer(user_id, name)  # Call the function to update attendance table
+
                 # Commit the changes to the database
                 connection.commit()
 
                 flash('Profile updated successfully', 'success')
-                return redirect('/dashboard')  # Redirect to the same edit_profile page after saving changes
+                return redirect('/dashboard')  # Redirect to the dashboard after saving changes
 
             else:
                 # If the request is a GET request, fetch the current user's data
@@ -787,6 +848,7 @@ def edit_profile():
             connection.close()
     else:
         return redirect('/')
+
 
 if __name__ == "__main__":
     
