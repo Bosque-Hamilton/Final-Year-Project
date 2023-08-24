@@ -3,7 +3,10 @@ import face_recognition
 import pickle
 import mysql.connector
 from PIL import Image
+import time
 import io
+import schedule
+import threading
 import os
 
 # Set up your MySQL database configuration here
@@ -62,16 +65,30 @@ def read_images_from_sql():
 
 
 
-print("Reading images from SQL and saving to the 'images' folder...")
-imgList, image_names = read_images_from_sql()
+# Define the function to run
+def run_task():
+    print("Reading images from SQL and saving to the 'images' folder...")
+    imgList, image_names = read_images_from_sql()
 
-print("Encoding Started ...")
-encodeListKnown = findEncodings(imgList)
-encodeListKnownWithNames = [encodeListKnown, image_names]
-print("Encoding Complete")
+    print("Encoding Started ...")
+    encodeListKnown = findEncodings(imgList)
+    encodeListKnownWithNames = [encodeListKnown, image_names]
+    print("Encoding Complete")
 
-# Save encoded face data and image names to a file
-file = open("EncodeFile.p", 'wb')
-pickle.dump(encodeListKnownWithNames, file)
-file.close()
-print("File Saved")
+    # Save encoded face data and image names to a file
+    file = open("EncodeFile.p", 'wb')
+    pickle.dump(encodeListKnownWithNames, file)
+    file.close()
+    print("File Saved")
+
+def scheduled_task():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+# Schedule the function to run every 1 minute
+schedule.every(1).minutes.do(run_task)
+
+# Start the scheduled task in a separate thread
+task_thread = threading.Thread(target=scheduled_task)
+task_thread.start()

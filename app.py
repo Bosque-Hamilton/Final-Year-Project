@@ -79,26 +79,21 @@ def read_images_from_sql():
 
     return imgList, image_names
 
-# # Schedule the function to run every 1 minute
-# schedule.every(1).minutes.do(read_images_from_sql)
+
+
+# print("Reading images from SQL and saving to the 'images' folder...")
+# imgList, image_names = read_images_from_sql()
 #
-# while True:
-#     schedule.run_pending()
-#     time.sleep(1)
-
-print("Reading images from SQL and saving to the 'images' folder...")
-imgList, image_names = read_images_from_sql()
-
-print("Encoding Started ...")
-encodeListKnown = findEncodings(imgList)
-encodeListKnownWithNames = [encodeListKnown, image_names]
-print("Encoding Complete")
-
-# Save encoded face data and image names to a file
-file = open("EncodeFile.p", 'wb')
-pickle.dump(encodeListKnownWithNames, file)
-file.close()
-print("File Saved")
+# print("Encoding Started ...")
+# encodeListKnown = findEncodings(imgList)
+# encodeListKnownWithNames = [encodeListKnown, image_names]
+# print("Encoding Complete")
+#
+# # Save encoded face data and image names to a file
+# file = open("EncodeFile.p", 'wb')
+# pickle.dump(encodeListKnownWithNames, file)
+# file.close()
+# print("File Saved")
 
 def capture_image():
     # Function to capture an image from the webcam
