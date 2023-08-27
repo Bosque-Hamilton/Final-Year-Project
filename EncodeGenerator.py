@@ -8,6 +8,16 @@ import io
 import schedule
 import threading
 import os
+import socket
+
+
+# Set up socket communication
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.bind(("localhost", 12345))
+server_socket.listen(1)
+
+# Global variable to hold the encodings
+encodeListKnownWithNames = []
 
 # Set up your MySQL database configuration here
 mysql_host = 'localhost'
@@ -72,23 +82,45 @@ def run_task():
 
     print("Encoding Started ...")
     encodeListKnown = findEncodings(imgList)
+    global encodeListKnownWithNames
     encodeListKnownWithNames = [encodeListKnown, image_names]
     print("Encoding Complete")
 
     # Save encoded face data and image names to a file
-    file = open("EncodeFile.p", 'wb')
-    pickle.dump(encodeListKnownWithNames, file)
-    file.close()
-    print("File Saved")
+    # file = open("EncodeFile.p", 'wb')
+    # pickle.dump(encodeListKnownWithNames, file)
+    # file.close()
+    # print("File Saved")
 
-def scheduled_task():
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+# def scheduled_task():
+#     while True:
+#         run_task()
+#         time.sleep(5)  # Sleep for 5 seconds (5 seconds)
+#
+# # # Schedule the function to run every 1 minute
+# # schedule.every(1).minutes.do(run_task)
+#
+# # Start the scheduled task in a separate thread
+# task_thread = threading.Thread(target=scheduled_task)
+# task_thread.start()
 
-# Schedule the function to run every 1 minute
-schedule.every(1).minutes.do(run_task)
 
-# Start the scheduled task in a separate thread
-task_thread = threading.Thread(target=scheduled_task)
-task_thread.start()
+# file_path = 'EncodeFile.p'  # Replace with the actual file path
+#
+# # Check if the file exists
+# if os.path.exists(file_path):
+#     # Open the file
+#     with open(file_path, 'rb') as file:
+#         encodeListKnownWithNames = pickle.load(file)
+#     encodeListKnown, image_names = encodeListKnownWithNames
+#
+#     print("Encoded file loaded")
+# else:
+#     print(f"Error: File '{file_path}' does not exist.")
+
+
+# Send the updated data over the socket
+connection, address = server_socket.accept()
+with connection:
+    data_to_send = pickle.dumps(encodeListKnownWithNames)
+    connection.send(data_to_send)

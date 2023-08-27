@@ -12,8 +12,10 @@ import pickle
 from flask_wtf import CSRFProtect
 import secrets
 import datetime
+import threading
 import schedule
 import base64
+import socket
 import json
 import time
 from io import BytesIO
@@ -32,79 +34,6 @@ mysql_host = 'localhost'
 mysql_user = 'root'
 mysql_password = ''
 mysql_database = 'face_recognition_db'
-
-def findEncodings(imagesList):
-    encodeList = []
-    for img in imagesList:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        face_encodings = face_recognition.face_encodings(img)
-        if len(face_encodings) > 0:
-            # Take the first face encoding (if multiple faces detected, you may handle them differently)
-            encode = face_encodings[0]
-            encodeList.append(encode)
-
-    return encodeList
-
-def save_image_from_blob(image_blob, image_name):
-    with Image.open(io.BytesIO(image_blob)) as img:
-        image_file_path = os.path.join("images", f"{image_name}.jpg")
-        img.save(image_file_path)
-
-def read_images_from_sql():
-    connection = mysql.connector.connect(
-        host=mysql_host,
-        user=mysql_user,
-        password=mysql_password,
-        database=mysql_database
-    )
-
-    cursor = connection.cursor()
-
-    select_query = "SELECT image_name, image_data FROM Images"
-    cursor.execute(select_query)
-    images_data = cursor.fetchall()
-
-    imgList = []
-    image_names = []
-
-    for image_name, image_data in images_data:
-        save_image_from_blob(image_data, image_name)
-
-        img = cv2.imread(os.path.join("images", f"{image_name}.jpg"))
-        imgList.append(img)
-        image_names.append(image_name)
-
-    cursor.close()
-    connection.close()
-
-    return imgList, image_names
-
-
-
-# print("Reading images from SQL and saving to the 'images' folder...")
-# imgList, image_names = read_images_from_sql()
-#
-# print("Encoding Started ...")
-# encodeListKnown = findEncodings(imgList)
-# encodeListKnownWithNames = [encodeListKnown, image_names]
-# print("Encoding Complete")
-#
-# # Save encoded face data and image names to a file
-# file = open("EncodeFile.p", 'wb')
-# pickle.dump(encodeListKnownWithNames, file)
-# file.close()
-# print("File Saved")
-
-def capture_image():
-    # Function to capture an image from the webcam
-    camera = cv2.VideoCapture(0)
-
-    _, image = camera.read()
-    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-    camera.release()
-
-    return image
 
 @app.route('/add_prsn', methods=['GET', 'POST'])
 def index():
@@ -130,58 +59,65 @@ def index():
                     if uploaded_image.filename and uploaded_image.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
                         image = Image.open(uploaded_image)
 
-                        # Store user information in the database
-                        try:
-                            connection = mysql.connector.connect(
-                                host=mysql_host,
-                                user=mysql_user,
-                                password=mysql_password,
-                                database=mysql_database
-                            )
+                        # Perform face encoding on the uploaded image
+                        face_encodings_list = face_recognition.face_encodings(np.array(image))
 
-                            cursor = connection.cursor()
+                        if len(face_encodings_list) > 0:
+                            face_encoding = face_encodings_list[0]
 
-                            # Define the SQL query to insert user information
-                            insert_query = "INSERT INTO student (name, student_id, email, gender, date_of_birth, course, year) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-                            cursor.execute(insert_query, (name, student_id,email, gender, date_of_birth, course, year))
+                            # Store user information in the database
+                            try:
+                                connection = mysql.connector.connect(
+                                    host=mysql_host,
+                                    user=mysql_user,
+                                    password=mysql_password,
+                                    database=mysql_database
+                                )
 
-                            # image_buffer = BytesIO()
-                            # image.save(image_buffer, format='JPEG')
-                            # image_binary = image_buffer.getvalue()
+                                cursor = connection.cursor()
 
-                            # Resize the image to a desired size
-                            desired_width = 640  # Adjust the desired width
-                            aspect_ratio = float(image.height) / float(image.width)
-                            desired_height = int(desired_width * aspect_ratio)
-                            image = image.resize((desired_width, desired_height), Image.ANTIALIAS)
+                                # Define the SQL query to insert user information
+                                insert_query = "INSERT INTO student (name, student_id, email, gender, date_of_birth, course, year) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                                cursor.execute(insert_query, (name, student_id,email, gender, date_of_birth, course, year))
 
-                            # Compress the image
-                            compression_quality = 85  # Adjust the compression quality (0-100)
-                            output_buffer = io.BytesIO()
-                            image.save(output_buffer, format='JPEG', quality=compression_quality)
+                                # Resize the image to a desired size
+                                desired_width = 640  # Adjust the desired width
+                                aspect_ratio = float(image.height) / float(image.width)
+                                desired_height = int(desired_width * aspect_ratio)
+                                image = image.resize((desired_width, desired_height), Image.ANTIALIAS)
 
-                            # Get the binary data of the compressed image
-                            image_binary = output_buffer.getvalue()
+                                # Compress the image
+                                compression_quality = 85  # Adjust the compression quality (0-100)
+                                output_buffer = io.BytesIO()
+                                image.save(output_buffer, format='JPEG', quality=compression_quality)
 
-                            # Define the SQL query to insert the image into the Images table
-                            insert_image_query = "INSERT INTO images (image_name, image_data) VALUES (%s, %s)"
+                                # Get the binary data of the compressed image
+                                image_binary = output_buffer.getvalue()
 
-                            # Insert the image into the Images table
-                            cursor.execute(insert_image_query, (name, image_binary))
+                                # Define the SQL query to insert the image into the Images table
+                                insert_image_query = "INSERT INTO images (image_name, image_data) VALUES (%s, %s)"
 
-                            # Commit changes to the database
-                            connection.commit()
+                                # Insert the image into the Images table
+                                cursor.execute(insert_image_query, (name, image_binary))
 
-                            cursor.close()
-                            connection.close()
+                                # Insert the face encoding into the face_encoding table
+                                insert_encoding_query = "INSERT INTO face_encoding (name, encoding_data) VALUES (%s, %s)"
+                                cursor.execute(insert_encoding_query, (name, pickle.dumps(face_encoding)))
 
-                            print("Image and data inserted successfully.")
+                                # Commit changes to the database
+                                connection.commit()
 
-                            return redirect('/add_prsn')
+                                cursor.close()
+                                connection.close()
 
-                        except mysql.connector.Error as err:
-                            return f"Error: {err}"
+                                print("Image, data, and face encoding inserted successfully.")
 
+                                return redirect('/add_prsn')
+
+                            except mysql.connector.Error as err:
+                                return f"Error: {err}"
+                        else:
+                            print("No face detected in the uploaded image.")
                     else:
                         print("Invalid image format or no image uploaded.")
 
@@ -196,17 +132,7 @@ def index():
         # User is not logged in, redirect to login page
         return redirect(url_for('login'))
 
-file_path = 'EncodeFile.p'  # Replace with the actual file path
 
-# Check if the file exists
-if os.path.exists(file_path):
-    # Open the file
-    with open(file_path, 'rb') as file:
-        encodeListKnownWithNames = pickle.load(file)
-    encodeListKnown, image_names = encodeListKnownWithNames
-    print("Encoded file loaded")
-else:
-    print(f"Error: File '{file_path}' does not exist.")
 
 def update_attendance(name):
     try:
@@ -320,6 +246,18 @@ def gen_frames(session_name,  lecturer_id):
         )
         cursor = connection.cursor()
 
+        # Retrieve face encodings and names from the face_encoding table
+        select_face_encodings_query = "SELECT encoding_data, name FROM face_encoding"
+        cursor.execute(select_face_encodings_query)
+        face_encodings_data = cursor.fetchall()
+
+        # Extract encodings and names from the fetched data
+        encodeListKnown = []
+        image_names = []
+        for encoding, name in face_encodings_data:
+            encodeListKnown.append(pickle.loads(encoding))
+            image_names.append(name)
+
         camera = cv2.VideoCapture(0)
         while True:
             success, frame = camera.read()  # read the camera frame
@@ -338,7 +276,7 @@ def gen_frames(session_name,  lecturer_id):
 
                 for face_encoding in face_encodings:
                     # Perform face recognition
-                    matches = face_recognition.compare_faces(encodeListKnown, face_encoding, tolerance=0.42)
+                    matches = face_recognition.compare_faces(encodeListKnown, face_encoding, tolerance=0.435)
                     name = "Unknown"
 
                     face_distances = face_recognition.face_distance(encodeListKnown, face_encoding)
@@ -569,6 +507,7 @@ def video_feed():
     lecturer_id = get_lecturer_id_from_user_id(user_id)
 
     return Response(gen_frames(session_name, lecturer_id), mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -846,6 +785,4 @@ def edit_profile():
 
 
 if __name__ == "__main__":
-    
-    
     app.run()
